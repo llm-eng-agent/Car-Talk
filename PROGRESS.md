@@ -134,11 +134,16 @@ Query-side retrieval + the evaluation that closes Phase 4's DoD (§18.3/§18.4):
   gold `chunk_id`s** (not vehicle membership) so a gate never passes on wrong-aspect evidence.
 - 12 offline tests (metric helpers + scripted-retriever runner + fake-client query builders).
 
-**Ablation result (live, top-5, approximate/HNSW ±a query or two):** hybrid R@5 ~0.61 · P@5
-~0.22 · resolution ~0.86 · coverage ~0.17. Hybrid is **kept** by the spec rule (beats
-dense-only), but **BM25-only is the strongest single mode** (R@5 0.65, coverage 0.33) — RRF
+**Ablation result (live, top-5, approximate/HNSW ±a query or two):** hybrid R@5 ~0.60 · P@5
+~0.22 · **hit-rate@5 ~0.82** · resolution ~0.86 · coverage ~0.10. Hybrid is **kept** by the
+spec rule (beats dense-only), but **BM25-only is the strongest single mode** (R@5 0.65) — RRF
 fusion with dense dilutes BM25's exact-term rankings on this Hebrew corpus (reconsider in
 Phase 5). Spike B checks pass: exact term "178,888"→MG (BM25), vehicle filter works.
+
+**Hit-rate@5 ~0.82** (≥1 gold chunk retrieved) is the answer-relevant read: a groundable
+answer is available for ~82% of queries, far above strict Recall@5. The low recall/precision
+is mostly labelling sparsity (1–3 gold tagged; sibling chunks carry the same fact), not
+missing evidence — so answer quality is much better than the strict gates suggest.
 
 **Finding (not a bug):** all four gates are **below the §18.3 targets** for *raw retrieval*.
 Causes (in `docs/eval_report.md`): strict chunk-level gold (relevant *sibling* chunks in the

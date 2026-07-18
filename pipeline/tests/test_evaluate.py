@@ -6,6 +6,7 @@ from car_talk_pipeline.evaluate import (
     balanced_coverage_hit,
     evaluate_dataset,
     expected_all_present,
+    hit_rate_at_k,
     precision_at_k,
     recall_at_k,
     retrieval_text,
@@ -42,6 +43,13 @@ def test_precision_at_k_scores_against_gold_chunks() -> None:
     # Only "a" is a gold chunk → 1 of 5, even though 2 chunks are from the expected vehicle.
     assert precision_at_k({"a"}, retrieved, k=5) == 0.2
     assert precision_at_k(set(), retrieved, k=0) == 0.0
+
+
+def test_hit_rate_at_k() -> None:
+    gold = {"a", "b"}
+    assert hit_rate_at_k(gold, [_chunk("a", "v"), _chunk("z", "v")]) is True  # one gold found
+    assert hit_rate_at_k(gold, [_chunk("z", "v")]) is False
+    assert hit_rate_at_k(set(), [_chunk("a", "v")]) is False
 
 
 def test_expected_all_present() -> None:
@@ -154,6 +162,9 @@ def test_evaluate_dataset_aggregates_and_accepts_hybrid() -> None:
     dense = report.mode_metrics[RetrievalMode.DENSE]
     assert hybrid.recall_at_5 == 1.0
     assert dense.recall_at_5 == 0.75  # (1.0 + 0.5) / 2
+    # Hit-rate ≥ recall: dense finds ≥1 gold on both gold queries even though recall is 0.75.
+    assert hybrid.hit_rate_at_5 == 1.0
+    assert dense.hit_rate_at_5 == 1.0
     assert hybrid.balanced_coverage == 1.0  # q2 both vehicles present
     assert dense.balanced_coverage == 0.0  # q2 missing aion
 
