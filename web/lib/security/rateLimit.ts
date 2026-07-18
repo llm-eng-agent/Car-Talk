@@ -62,7 +62,20 @@ class UpstashRateLimiter implements RateLimiter {
 export function createRateLimiter(env: Record<string, string | undefined> = process.env): RateLimiter {
   const url = env.UPSTASH_REDIS_REST_URL?.trim();
   const token = env.UPSTASH_REDIS_REST_TOKEN?.trim();
-  if (url && token) return new UpstashRateLimiter(url, token);
+  if (url && token) {
+    // With Upstash the hashed identifiers are persisted server-side. Without a real RATE_LIMIT_SECRET,
+    // clientId() hashes IPs with a public default key — flag it loudly rather than fail silently
+    // (we don't throw, to stay fail-open). Set RATE_LIMIT_SECRET in production.
+    if (!env.RATE_LIMIT_SECRET?.trim()) {
+      console.warn(
+        JSON.stringify({
+          event: "rate_limit_secret_missing",
+          message: "Upstash is configured but RATE_LIMIT_SECRET is unset; IP hashes use a public default key.",
+        }),
+      );
+    }
+    return new UpstashRateLimiter(url, token);
+  }
   return new InMemoryRateLimiter();
 }
 
