@@ -8,6 +8,7 @@ import pytest
 from qdrant_client import models
 
 from car_talk_pipeline.chunking import chunk_document, embedding_text
+from car_talk_pipeline.config import ConfigError, load_settings, require_qdrant
 from car_talk_pipeline.embedding import EmbeddingCache
 from car_talk_pipeline.models import (
     ArticleType,
@@ -150,6 +151,28 @@ def test_ensure_collection_recreate_drops_first() -> None:
     _indexer(client).ensure_collection(recreate=True)
     assert client.deleted_collections == ["car_review_chunks_v1"]
     assert len(client.created) == 1
+
+
+def test_indexing_loads_settings_without_openai_key(tmp_path: Any, monkeypatch: Any) -> None:
+    # Cache-only indexing box: Qdrant creds present, no OPENAI_API_KEY.
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setenv("QDRANT_URL", "https://cluster:6333")
+    monkeypatch.setenv("QDRANT_API_KEY", "qdrant-key")
+    monkeypatch.setenv("QDRANT_COLLECTION", "car_review_chunks_v1")
+    empty_env = tmp_path / "empty.env"
+    empty_env.write_text("", encoding="utf-8")
+
+    settings = load_settings(env_path=empty_env, require_openai=False)
+    assert settings.openai_api_key == ""
+    assert require_qdrant(settings) == (
+        "https://cluster:6333",
+        "qdrant-key",
+        "car_review_chunks_v1",
+    )
+
+    # The default (embed/scrape) path still guards on the OpenAI key.
+    with pytest.raises(ConfigError, match="OPENAI_API_KEY"):
+        load_settings(env_path=empty_env)
 
 
 def test_recreate_requires_all() -> None:

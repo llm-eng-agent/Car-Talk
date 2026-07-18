@@ -282,7 +282,8 @@ def main(argv: list[str] | None = None) -> None:
     manifest = load_manifest(args.manifest)
     sources = manifest.enabled_sources() if args.all else [find_source(manifest, args.document_id)]
 
-    settings = load_settings()
+    # Indexing reads cached dense vectors and never calls OpenAI, so no OpenAI key needed.
+    settings = load_settings(require_openai=False)
     indexer = _build_indexer(settings)
     indexer.ensure_collection(recreate=args.recreate)
 

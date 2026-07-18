@@ -22,7 +22,11 @@ class ConfigError(Exception):
 
 @dataclass(frozen=True)
 class Settings:
-    """Validated runtime settings. Never log ``openai_api_key`` or ``qdrant_api_key``."""
+    """Validated runtime settings. Never log ``openai_api_key`` or ``qdrant_api_key``.
+
+    ``openai_api_key`` is empty on the indexing-only path (``load_settings(require_openai=
+    False)``), which reads cached vectors and never calls OpenAI.
+    """
 
     openai_api_key: str
     embedding_model: str = "text-embedding-3-small"
@@ -34,20 +38,22 @@ class Settings:
     qdrant_collection: str = "car_review_chunks_v1"
 
 
-def load_settings(env_path: Path | None = None) -> Settings:
+def load_settings(env_path: Path | None = None, *, require_openai: bool = True) -> Settings:
     """Load and validate settings from the environment / ``.env``.
 
-    Qdrant values are read when present but not required here — only ``OPENAI_API_KEY`` is.
+    Qdrant values are read when present but not required here — validated at the point of use
+    by ``require_qdrant``. ``OPENAI_API_KEY`` is required unless ``require_openai`` is False
+    (the indexing-only path reads cached vectors and never calls OpenAI).
 
     Raises:
-        ConfigError: If ``OPENAI_API_KEY`` is missing or empty.
+        ConfigError: If ``require_openai`` and ``OPENAI_API_KEY`` is missing or empty.
     """
 
     import os
 
     load_dotenv(env_path or DEFAULT_ENV_PATH)
     api_key = os.environ.get("OPENAI_API_KEY", "").strip()
-    if not api_key:
+    if require_openai and not api_key:
         raise ConfigError(
             "OPENAI_API_KEY is not set. Add it to the repo-root .env (see .env.example)."
         )
