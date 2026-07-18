@@ -27,7 +27,14 @@ from typing import Any
 
 from parsel import Selector, SelectorList
 
-from car_talk_pipeline.scraping.models import CanonicalDocument, Section, SourceEntry, Vehicle
+from car_talk_pipeline.scraping.models import (
+    CanonicalDocument,
+    ProsCons,
+    QAPair,
+    Section,
+    SourceEntry,
+    Vehicle,
+)
 
 # --- Selectors (implementation detail; see module docstring) ------------------------
 TITLE_CSS = "h1"
@@ -47,6 +54,16 @@ INTRODUCTION_HEADING = "introduction"
 # published-only fallback.
 JSON_LD_CSS = 'script[type="application/ld+json"]::text'
 PUBLISHED_TIME_CSS = "time.article-meta__date::attr(datetime)"
+
+# Structured supplementary blocks (outside the article prose). Optional per article.
+QA_ITEM_CSS = ".faq__body .spollers__item"
+QA_QUESTION_CSS = ".spollers__title"
+QA_ANSWER_CSS = ".spollers__body"
+PROS_CONS_COL_CSS = ".pros-cons-table__col"
+PROS_CONS_TITLE_CSS = ".pros-cons-table__title"
+# Column-title keywords that identify the pros vs cons column (mapped by title, not order).
+PROS_TITLE_KEYWORD = "יתרונות"
+CONS_TITLE_KEYWORD = "חסרונות"
 
 _WHITESPACE_RE = re.compile(r"\s+")
 
@@ -164,6 +181,43 @@ def _extract_dates(selector: Selector) -> tuple[datetime | None, datetime | None
     return published_at, modified_at
 
 
+def _extract_qa_pairs(selector: Selector) -> list[QAPair]:
+    """Extract the FAQ accordion as question/answer pairs (best-effort, empty if absent)."""
+
+    pairs: list[QAPair] = []
+    for item in selector.css(QA_ITEM_CSS):
+        question = _normalize_text("".join(item.css(f"{QA_QUESTION_CSS} ::text").getall()))
+        answer = _normalize_text("".join(item.css(f"{QA_ANSWER_CSS} ::text").getall()))
+        if question and answer:
+            pairs.append(QAPair(question=question, answer=answer))
+    return pairs
+
+
+def _extract_pros_cons(selector: Selector) -> ProsCons | None:
+    """Extract the pros/cons verdict table, mapping columns by title (not position).
+
+    Returns None when no such table exists or both lists come out empty.
+    """
+
+    pros: list[str] = []
+    cons: list[str] = []
+    matched_a_column = False
+    for column in selector.css(PROS_CONS_COL_CSS):
+        title = _normalize_text("".join(column.css(f"{PROS_CONS_TITLE_CSS} ::text").getall()))
+        items = [_normalize_text("".join(li.css("::text").getall())) for li in column.css("li")]
+        items = [item for item in items if item]
+        if PROS_TITLE_KEYWORD in title:
+            pros.extend(items)
+            matched_a_column = True
+        elif CONS_TITLE_KEYWORD in title:
+            cons.extend(items)
+            matched_a_column = True
+
+    if not matched_a_column or (not pros and not cons):
+        return None
+    return ProsCons(pros=pros, cons=cons)
+
+
 def extract_document(html: str, source: SourceEntry) -> CanonicalDocument:
     """Extract a canonical document from article HTML.
 
@@ -211,6 +265,8 @@ def extract_document(html: str, source: SourceEntry) -> CanonicalDocument:
         coverage_scope=source.coverage_scope,
         vehicle=Vehicle(make=source.make, model=source.model, model_year=source.model_year),
         sections=sections,
+        qa_pairs=_extract_qa_pairs(selector),
+        pros_cons=_extract_pros_cons(selector),
         published_at=published_at,
         modified_at=modified_at,
     )
@@ -225,4 +281,17 @@ def normalized_content(document: CanonicalDocument) -> str:
     blocks: list[str] = []
     for section in document.sections:
         blocks.append("\n".join([section.heading, *section.paragraphs]))
+    for pair in document.qa_pairs:
+        blocks.append("\n".join([pair.question, pair.answer]))
+    if document.pros_cons is not None:
+        blocks.append(
+            "\n".join(
+                [
+                    PROS_TITLE_KEYWORD,
+                    *document.pros_cons.pros,
+                    CONS_TITLE_KEYWORD,
+                    *document.pros_cons.cons,
+                ]
+            )
+        )
     return "\n\n".join(blocks)

@@ -7,7 +7,7 @@ canonical documents, raw HTML (debug), and a JSONL run manifest via ``IngestionS
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from typing import Any
 
@@ -25,7 +25,9 @@ class AutoCoIlSpider(scrapy.Spider):
 
     name = "auto_co_il"
 
-    custom_settings = {
+    # Scrapy declares custom_settings as an instance variable, so ClassVar is rejected by
+    # mypy; the dict is read-only config, never mutated.
+    custom_settings = {  # noqa: RUF012
         "ROBOTSTXT_OBEY": True,
         "DOWNLOAD_DELAY": 1.0,
         "AUTOTHROTTLE_ENABLED": True,
@@ -49,7 +51,8 @@ class AutoCoIlSpider(scrapy.Spider):
         self._pipeline_version = pipeline_version
         self._storage.ensure_dirs()
 
-    def start_requests(self) -> Iterator[Request]:
+    async def start(self) -> AsyncIterator[Request]:
+        # Scrapy 2.13+ replaced the sync ``start_requests`` with async ``start``.
         for source in self._sources:
             yield Request(
                 url=source.url,
