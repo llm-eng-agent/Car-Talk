@@ -44,7 +44,7 @@ export function modeForRoute(route: Route): GenerationMode | null {
 }
 
 // A rotating set of witty out-of-scope openers, so the abstention doesn't feel canned on repeat.
-// Every message still names the make and states the corpus limit (spec §24.8).
+// Every message still names the vehicle and states it isn't in the article corpus (eval q27).
 const OUT_OF_SCOPE_OPENERS = [
   "יש בעיה בפאלנג'י השמאלי, אין לי במקורות מספיק מידע כדי לענות על זה...",
   "נדלקה לי פה נורת ה־ Check Engine המידע הזה לא נמצא במקורות שלי",
@@ -54,7 +54,7 @@ const OUT_OF_SCOPE_OPENERS = [
 function outOfScopeMessage(mention?: string): string {
   const subject = mention ? `«${mention}»` : "הרכב הזה";
   const opener = OUT_OF_SCOPE_OPENERS[Math.floor(Math.random() * OUT_OF_SCOPE_OPENERS.length)];
-  return `${opener} ${subject} לא נמצא במאגר הביקורות שלי — אני מכיר רק את שמונת הרכבים שנסקרו ב-Auto.co.il.`;
+  return `${opener} ${subject} אינו נמצא במאגר הכתבות שלי.`;
 }
 
 // insufficient_evidence stays neutral/professional (owner's choice).

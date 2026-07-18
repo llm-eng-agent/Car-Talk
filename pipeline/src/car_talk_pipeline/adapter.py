@@ -1,5 +1,4 @@
-"""Deterministic extraction of Auto.co.il review articles into canonical documents.
-"""
+"""Deterministic extraction of Auto.co.il review articles into canonical documents."""
 
 from __future__ import annotations
 

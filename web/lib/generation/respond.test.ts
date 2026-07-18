@@ -11,9 +11,9 @@ describe("terminalResponse", () => {
     const res = terminalResponse(pkg({ route: "out_of_scope", sufficient: false, unresolvedMention: "Toyota" }));
     expect(res?.status).toBe("out_of_scope");
     expect(res?.unresolvedMention).toBe("Toyota");
-    // Every witty variant still names the make and states the corpus limit (spec §24.8).
+    // The visible message still names the vehicle and states it isn't in the corpus (eval q27).
     expect(res?.message).toContain("Toyota");
-    expect(res?.message).toContain("שמונת הרכבים");
+    expect(res?.message).toContain("מאגר הכתבות");
   });
 
   it("rotates the out_of_scope wording across calls", () => {
