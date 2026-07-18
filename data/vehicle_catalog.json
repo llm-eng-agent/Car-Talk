@@ -1,0 +1,44 @@
+{
+  "vehicles": [
+    {
+      "vehicle_id": "citroen_c3",
+      "canonical_name": "Citroen C3",
+      "aliases": ["Citroen C3", "סיטרואן C3", "סיטרואן", "C3"]
+    },
+    {
+      "vehicle_id": "audi_rs3",
+      "canonical_name": "Audi RS3",
+      "aliases": ["Audi RS3", "אאודי RS3", "אודי RS3", "אאודי", "אודי", "RS3"]
+    },
+    {
+      "vehicle_id": "kia_ev9",
+      "canonical_name": "Kia EV9",
+      "aliases": ["Kia EV9", "קיה EV9", "קיה", "EV9"]
+    },
+    {
+      "vehicle_id": "mg_s6",
+      "canonical_name": "MG S6",
+      "aliases": ["MG S6", "אם ג'י S6", "אמ ג'י S6", "MG", "S6"]
+    },
+    {
+      "vehicle_id": "hyundai_elantra_n_manual",
+      "canonical_name": "Hyundai Elantra N",
+      "aliases": ["Hyundai Elantra N", "Elantra N", "יונדאי אלנטרה N", "אלנטרה N", "אלנטרה", "יונדאי"]
+    },
+    {
+      "vehicle_id": "aion_ht",
+      "canonical_name": "Aion HT",
+      "aliases": ["Aion HT", "איון HT", "איון"]
+    },
+    {
+      "vehicle_id": "lynk_co_01",
+      "canonical_name": "Lynk & Co 01",
+      "aliases": ["Lynk & Co 01", "Lynk & Co", "לינק אנד קו 01", "לינק אנד קו", "לינקו 01", "לינקו"]
+    },
+    {
+      "vehicle_id": "genesis_gv80",
+      "canonical_name": "Genesis GV80",
+      "aliases": ["Genesis GV80", "ג'נסיס GV80", "ג'נסיס", "GV80"]
+    }
+  ]
+}

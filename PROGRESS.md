@@ -8,7 +8,7 @@ that step. One PR per task; only the owner merges.
 
 Legend: ✅ done · 🔄 in progress · ⬜ not started · ⛔ blocked
 
-_Last updated: 2026-07-18 (Phase 4b: retrieval eval runner)_
+_Last updated: 2026-07-18 (Phase 5a: web bootstrap + vehicle resolver)_
 
 ## Status by phase
 
@@ -21,7 +21,7 @@ _Last updated: 2026-07-18 (Phase 4b: retrieval eval runner)_
 | Phase 3a — Chunking + embeddings | ✅ | 162 chunks embedded (1536-d); cache works |
 | Phase 3b — Qdrant indexing | ✅ | 162 points in `car_review_chunks_v1` (dense + BM25) |
 | Phase 4 — Evaluation dataset (30 Hebrew queries) | ✅ | Dataset + eval runner + ablation report; gates are a Phase-5 baseline |
-| Phase 5 — Retrieval orchestrator | ⬜ | |
+| Phase 5 — Retrieval orchestrator | 🔄 | 5a: web bootstrap + vehicle resolver (100% on golden set); retrieval routes next |
 | Phase 6 — Context + generation | ⬜ | |
 | Phase 7 — Recommendation engine | ⬜ | |
 | Phase 8 — Session memory | ⬜ | |
@@ -152,6 +152,27 @@ lets one vehicle dominate comparisons, and un-named recommendation queries need 
 resolution. All three are **Phase 5 orchestrator** work; per spec the gates are re-evaluated
 there. RRF/top-k were **not** tuned to force a pass (spec line 567).
 
+## 🔄 Phase 5a — web bootstrap + deterministic vehicle resolver
+
+Per spec (§20.1) the retrieval orchestrator is **TypeScript in the Next.js app**, not Python.
+Phase 5 is split: 5a bootstraps `web/` and delivers the deterministic resolver + shared
+catalogs (offline-verifiable); 5b adds the live retrieval routes (Qdrant TS client, per-vehicle
+balanced retrieval) — which is what actually lifts the coverage gate.
+
+- **`web/`**: minimal Next.js 15 + TypeScript (strict) + Vitest, pnpm. No UI/API yet — only
+  `web/lib/retrieval/`. `pnpm build` and `pnpm typecheck` pass.
+- **Shared catalogs** (committed JSON in `data/`, language-agnostic, also usable by Python):
+  `vehicle_catalog.json` (§11.2 — 8 vehicles with **Hebrew + English aliases**),
+  `aspect_lexicon.json` (§11.5 — Hebrew/English keyword → the 11 aspect tokens).
+- **Deterministic resolver** (§11.1, not LLM): `normalize` (NFKC + lowercase + punctuation),
+  `matcher` (token-bounded, tolerant of attached **Hebrew one/two-letter prefixes** so "לאיון"
+  → `aion_ht`, "הטווח" → `efficiency_range`), `vehicleResolver` (longest-match-first alias
+  matching), `aspects` (keyword → aspect, max 3).
+- **15 Vitest tests** incl. `vehicleResolution.eval.test.ts`: over the golden-set queries that
+  **name** a vehicle, the resolver returns exactly `expected_vehicle_ids` → **vehicle resolution
+  = 100%** (Phase 5 DoD); un-named recommendations + the out-of-corpus query resolve to no
+  vehicle (→ discovery/abstain downstream).
+
 ## Open flags / dependencies
 
 - ✅ **OpenAI key** available (in git-ignored `.env`).
@@ -172,4 +193,5 @@ there. RRF/top-k were **not** tuned to force a pass (spec line 567).
 | #4 | Phase 3a — chunking + embeddings (+ module consolidation 19→8) | Merged |
 | #6 | Phase 3b — Qdrant hybrid indexing | Merged |
 | #7 | Phase 4 — Hebrew golden eval dataset | Merged |
-| #8 | Phase 4b / Spike B — retrieval eval runner + ablation | Open |
+| #8 | Phase 4b / Spike B — retrieval eval runner + ablation | Merged |
+| #9 | Phase 5a — web bootstrap + deterministic vehicle resolver | Open |
