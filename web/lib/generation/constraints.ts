@@ -14,6 +14,9 @@ export interface ParsedConstraints {
   transmission?: Transmission;
 }
 
+export const POWERTRAINS: Powertrain[] = ["electric", "hybrid", "gasoline", "diesel"];
+export const TRANSMISSIONS: Transmission[] = ["automatic", "manual"];
+
 const POWERTRAIN_ALIASES: Record<Powertrain, string[]> = {
   electric: ["חשמלי", "חשמלית", "electric", "ev"],
   hybrid: ["היברידי", "היברידית", "hybrid"],

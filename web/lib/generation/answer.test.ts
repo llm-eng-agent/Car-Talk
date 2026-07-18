@@ -5,6 +5,7 @@ import { type RetrievedChunk } from "../retrieval/types";
 import { answer } from "./answer";
 import { type StructuredModel } from "./generate";
 import { type GenerationOutput } from "./schema";
+import { emptySession } from "./session";
 
 function chunk(vehicleId: string, i = 0): RetrievedChunk {
   return {
@@ -137,6 +138,42 @@ describe("answer pipeline", () => {
 
     expect(res.status).toBe("insufficient_evidence");
     expect(res.recommendation).toBeUndefined();
+  });
+
+  it("returns an updated session with the answered vehicle active", async () => {
+    const { model } = countingModel(goodOutput);
+    const retriever = retrieverReturning((o) => (o?.vehicleIds ? [chunk("mg_s6")] : []));
+
+    const res = await answer("ספר לי על MG S6", undefined, { retriever, model });
+
+    expect(res.session.activeVehicleIds).toEqual(["mg_s6"]);
+  });
+
+  it("uses the prior session's active vehicle for a follow-up that names none", async () => {
+    const { model } = countingModel(goodOutput);
+    const seen: string[][] = [];
+    const retriever = retrieverReturning((o) => {
+      if (o?.vehicleIds) seen.push(o.vehicleIds);
+      return o?.vehicleIds ? [chunk(o.vehicleIds[0])] : [];
+    });
+    const prior = { ...emptySession(), activeVehicleIds: ["mg_s6"] };
+
+    const res = await answer("ומה הטווח שלו?", prior, { retriever, model });
+
+    expect(res.status).toBe("complete");
+    expect(seen).toContainEqual(["mg_s6"]); // retrieval was filtered to the active vehicle
+  });
+
+  it("leaves the session unchanged on a terminal out_of_scope turn", async () => {
+    const { model, calls } = countingModel(goodOutput);
+    const retriever = retrieverReturning(() => [chunk("mg_s6")]);
+    const prior = { ...emptySession(), activeVehicleIds: ["mg_s6"] };
+
+    const res = await answer("האם כדאי לקנות טויוטה קורולה?", prior, { retriever, model });
+
+    expect(res.status).toBe("out_of_scope");
+    expect(res.session).toEqual(prior); // unchanged
+    expect(calls()).toBe(0);
   });
 
   it("returns a safe error when retrieval throws (no model call)", async () => {
