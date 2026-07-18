@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
+import { Backdrop } from "@/components/Backdrop";
 import "./globals.css";
 
 export const metadata = {
-  title: "Car-Talk — יועץ הרכב מבוסס-ביקורות",
-  description: "צ׳אט ייעוץ רכב שעונה אך ורק מתוך 8 ביקורות מאושרות, עם ציטוט לכל טענה.",
+  title: "Car-Talk — מדברים רכב",
+  description: "מדברים רכב.",
 };
 
 // Hebrew UI font loaded at runtime (not via next/font) so the production build stays offline —
@@ -19,7 +20,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <Backdrop />
+        {children}
+      </body>
     </html>
   );
 }

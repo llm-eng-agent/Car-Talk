@@ -3,19 +3,30 @@
 // The chat surface: holds the message list + input, sends each turn to /api/chat with the prior
 // SessionState, and stores the canonical state the server returns (spec §16.6). Short-term memory
 // lives in sessionStorage (clientSession) — no accounts, no history, "New conversation" wipes it.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentType, type SVGProps } from "react";
 import { AnswerView } from "./AnswerView";
 import { PreferencePanel } from "./PreferencePanel";
 import type { AnswerResult } from "@/lib/generation/answer";
 import { emptySession, type SessionState } from "@/lib/generation/session";
 import { clearClientSession, loadClientSession, saveClientSession } from "@/lib/session/clientSession";
+import {
+  ChevronLeftIcon,
+  NewChatIcon,
+  ScaleIcon,
+  SendIcon,
+  SparkleIcon,
+  UsersIcon,
+  WalletIcon,
+} from "@/lib/ui/icons";
 
 type ChatMessage = { role: "user"; text: string } | { role: "assistant"; result: AnswerResult };
 
-const SUGGESTIONS = [
-  "אני מחפש רכב משפחתי לשלושה ילדים. נוחות ומרחב חשובים לי יותר מביצועים.",
-  "השווה בין ה-EV9 ל-GV80.",
-  "מה אתה ממליץ לנהיגה עירונית עם תקציב חשמלי?",
+type Suggestion = { title: string; subtitle: string; query: string; icon: ComponentType<SVGProps<SVGSVGElement>> };
+
+const SUGGESTIONS: Suggestion[] = [
+  { title: "רכב למשפחה", subtitle: "איזה רכב מתאים למשפחה עם שלושה ילדים?", query: "איזה רכב מתאים למשפחה עם שלושה ילדים?", icon: UsersIcon },
+  { title: "השוואת דגמים", subtitle: "השווה בין EV9 ל-GV80", query: "השווה בין EV9 ל-GV80", icon: ScaleIcon },
+  { title: "רכב בתקציב", subtitle: "איזה רכב חשמלי נותן הכי הרבה תמורה?", query: "איזה רכב חשמלי נותן הכי הרבה תמורה?", icon: WalletIcon },
 ];
 
 export function Chat() {
@@ -94,24 +105,33 @@ export function Chat() {
 
   return (
     <div className="mx-auto flex h-dvh max-w-5xl flex-col px-3 sm:px-5">
-      <header className="flex items-center justify-between py-4">
-        <div>
-          <h1 className="text-lg font-bold text-white">Car-Talk</h1>
-          <p className="text-xs text-white/60">יועץ רכב מבוסס-ביקורות · תשובה מצוטטת בלבד</p>
-        </div>
+      <header className="flex items-start justify-between py-5">
         <button
           type="button"
           onClick={reset}
-          className="rounded-full border border-white/20 px-3 py-1.5 text-sm font-medium text-white/90 hover:bg-white/10"
+          className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3.5 py-2 text-sm font-medium text-white/85 transition hover:border-accent/40 hover:bg-white/5"
           data-testid="new-conversation"
         >
+          <NewChatIcon className="h-4 w-4" />
           שיחה חדשה
         </button>
+        <div className="text-left" dir="ltr">
+          <h1 className="text-xl font-bold tracking-tight text-white">
+            Car-Talk<span className="text-accent">.</span>
+          </h1>
+          <p className="text-xs text-accent/70" dir="rtl">
+            מדברים רכב.
+          </p>
+        </div>
       </header>
 
-      <div className="grid min-h-0 flex-1 gap-4 pb-4 md:grid-cols-[1fr_280px]">
+      <div
+        className={`grid min-h-0 flex-1 gap-4 pb-5 ${
+          messages.length > 0 ? "md:grid-cols-[1fr_280px]" : "grid-cols-1"
+        }`}
+      >
         <div className="flex min-h-0 flex-col">
-          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto rounded-2xl bg-canvas">
+          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
             {messages.length === 0 ? (
               <Welcome onPick={send} />
             ) : (
@@ -119,12 +139,12 @@ export function Chat() {
                 {messages.map((m, i) =>
                   m.role === "user" ? (
                     <div key={i} className="flex justify-start">
-                      <div className="max-w-[85%] rounded-2xl bg-brand px-4 py-2.5 text-[15px] text-white">
+                      <div className="max-w-[85%] rounded-2xl border border-accent/25 bg-accent/10 px-4 py-2.5 text-[15px] text-white">
                         {m.text}
                       </div>
                     </div>
                   ) : (
-                    <div key={i} className="rounded-2xl bg-surface p-4 shadow-sm">
+                    <div key={i} className="rounded-2xl bg-surface p-4 shadow-lg shadow-black/20">
                       <AnswerView result={m.result} namespace={String(i)} />
                     </div>
                   ),
@@ -139,30 +159,36 @@ export function Chat() {
               e.preventDefault();
               void send(input);
             }}
-            className="mt-3 flex gap-2"
+            className="mt-3 flex items-stretch gap-2"
           >
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="שאלו על רכב, בקשו השוואה או המלצה…"
-              className="flex-1 rounded-full border border-white/15 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-accent focus:outline-none"
-              data-testid="chat-input"
-              disabled={loading}
-            />
+            <div className="glow-focus relative flex flex-1 items-center rounded-full border border-white/15 bg-white/5 transition">
+              <SparkleIcon className="pointer-events-none absolute right-4 h-5 w-5 text-accent/70" />
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="איזה רכב מעניין אותך?"
+                className="w-full bg-transparent py-3.5 pr-12 pl-4 text-white placeholder:text-white/40 focus:outline-none"
+                data-testid="chat-input"
+                disabled={loading}
+              />
+            </div>
             <button
               type="submit"
               disabled={loading || input.trim().length === 0}
-              className="rounded-full bg-accent px-5 py-3 font-semibold text-white disabled:opacity-40"
+              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-accent-strong px-6 py-3.5 font-semibold text-white shadow-[0_0_24px_rgba(45,212,191,0.25)] transition hover:bg-accent disabled:opacity-40 disabled:shadow-none"
               data-testid="send"
             >
-              שליחה
+              <SendIcon className="h-4 w-4" />
+              בואו נבדוק
             </button>
           </form>
         </div>
 
-        <div className="min-h-0 overflow-y-auto">
-          <PreferencePanel session={session} />
-        </div>
+        {messages.length > 0 && (
+          <div className="min-h-0 overflow-y-auto">
+            <PreferencePanel session={session} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -170,22 +196,31 @@ export function Chat() {
 
 function Welcome({ onPick }: { onPick: (text: string) => void }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-5 px-4 text-center">
-      <div>
-        <h2 className="text-2xl font-bold text-white">מה תרצו לדעת על הרכב הבא שלכם?</h2>
-        <p className="mt-2 text-sm text-white/60">
-          אני עונה אך ורק מתוך 8 ביקורות מאושרות, ומצטט מקור לכל טענה. אם אין מידע — אומר זאת במפורש.
+    <div className="flex h-full flex-col items-center justify-center gap-8 px-4">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold text-white sm:text-4xl">
+          איזה רכב עומד <span className="text-accent">אצלך</span> על הפרק?
+        </h2>
+        <p className="mx-auto mt-3 max-w-2xl text-sm text-white/55 sm:text-base">
+          אפשר להשוות דגמים, לבדוק התאמה למשפחה או להבין איפה כל רכב באמת נופל.
         </p>
       </div>
-      <div className="flex w-full max-w-xl flex-col gap-2">
+      <div className="flex w-full max-w-2xl flex-col gap-3">
         {SUGGESTIONS.map((s) => (
           <button
-            key={s}
+            key={s.title}
             type="button"
-            onClick={() => onPick(s)}
-            className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-right text-sm text-white/90 hover:bg-white/10"
+            onClick={() => onPick(s.query)}
+            className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-right transition hover:border-accent/40 hover:bg-white/[0.06] hover:shadow-[0_0_34px_rgba(45,212,191,0.12)]"
           >
-            {s}
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-accent/40 text-accent transition group-hover:bg-accent/10">
+              <s.icon className="h-6 w-6" />
+            </span>
+            <span className="flex-1">
+              <span className="block font-bold text-white">{s.title}</span>
+              <span className="block text-sm text-white/55">{s.subtitle}</span>
+            </span>
+            <ChevronLeftIcon className="h-5 w-5 shrink-0 text-accent/60 transition group-hover:-translate-x-1 group-hover:text-accent" />
           </button>
         ))}
       </div>
@@ -195,7 +230,10 @@ function Welcome({ onPick }: { onPick: (text: string) => void }) {
 
 function Thinking() {
   return (
-    <div className="rounded-2xl bg-surface p-4 text-sm text-ink-soft" data-testid="thinking">
+    <div
+      className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70"
+      data-testid="thinking"
+    >
       <span className="inline-flex items-center gap-2">
         <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
         אוחז ראיות ומנסח תשובה מצוטטת…

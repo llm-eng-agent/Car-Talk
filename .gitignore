@@ -229,3 +229,8 @@ node_modules/
 # The Python `lib/` rule above is unanchored and would hide the web app's source dir.
 !web/lib/
 !web/lib/**
+
+# Design reference mockups / screenshots dropped at the repo root are working aids, not source.
+/*.png
+/*.jpg
+/*.jpeg

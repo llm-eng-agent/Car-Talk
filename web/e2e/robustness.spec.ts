@@ -54,9 +54,16 @@ test("malformed stored session does not crash the page", async ({ page }) => {
   await page.addInitScript(() => {
     window.sessionStorage.setItem("car-talk:session", JSON.stringify({ preferences: "nope" }));
   });
+  await page.route("**/api/chat", async (route: Route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(answerWithCitation("תשובה")) });
+  });
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /מה תרצו לדעת/ })).toBeVisible();
-  await expect(page.getByTestId("preference-panel")).toContainText("עדיין לא ציינת העדפות");
+  await expect(page.getByRole("heading", { name: /על הפרק/ })).toBeVisible();
+  // Starting a turn renders the preference panel with the restored (sanitized) session — this is the
+  // render that used to crash on the raw malformed value. It must render cleanly instead.
+  await ask(page, "שאלה כלשהי");
+  await expect(page.getByTestId("answer")).toBeVisible();
+  await expect(page.getByTestId("preference-panel")).toBeVisible();
 });
 
 test("citation anchors are namespaced per turn (no cross-turn collision)", async ({ page }) => {
@@ -103,6 +110,6 @@ test("a response in flight when reset is clicked is discarded", async ({ page })
   await page.waitForTimeout(1200); // let the stale response resolve
 
   await expect(page.getByTestId("answer")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: /מה תרצו לדעת/ })).toBeVisible();
-  await expect(page.getByTestId("preference-panel")).toContainText("עדיין לא ציינת העדפות");
+  await expect(page.getByRole("heading", { name: /על הפרק/ })).toBeVisible();
+  await expect(page.getByTestId("preference-panel")).toBeHidden();
 });

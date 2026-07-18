@@ -1,26 +1,28 @@
 @import "tailwindcss";
 
-/* Car-Talk automotive advisory identity (spec §19.6): a professional review product, not a
-   generic chat clone. Graphite canvas, deep-blue primary, evidence-tinted state colors. */
+/* Car-Talk automotive advisory identity (spec §19.6): a cinematic, professional review product —
+   near-black teal-tinted canvas, electric-teal accent, glassy chrome. Answer/source/preference
+   cards stay on a light surface for dense-text legibility. */
 @theme {
   --font-sans: "Assistant", "Heebo", ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
 
-  --color-canvas: #0f1720; /* page background (graphite) */
-  --color-surface: #ffffff; /* cards */
+  --color-canvas: #060b0f; /* near-black, faint teal tint */
+  --color-surface: #ffffff; /* light cards (answers/sources/preferences) */
   --color-surface-muted: #f1f5f9;
-  --color-ink: #0f1720; /* primary text on light surfaces */
+  --color-ink: #0f1720; /* text on light surfaces */
   --color-ink-soft: #475569;
   --color-line: #e2e8f0;
 
-  --color-brand: #1e3a8a; /* deep automotive blue */
-  --color-brand-soft: #eef2ff;
-  --color-accent: #0ea5a4; /* electric teal */
+  --color-brand: #0f766e; /* deep teal (primary) */
+  --color-brand-soft: #ccfbf1;
+  --color-accent: #2dd4bf; /* electric teal — glows, highlights */
+  --color-accent-strong: #14b8a6; /* solid teal — buttons */
 
-  --color-good: #15803d; /* satisfied / positive */
+  --color-good: #15803d;
   --color-good-soft: #dcfce7;
-  --color-warn: #b45309; /* trade-off / partial */
+  --color-warn: #b45309;
   --color-warn-soft: #fef3c7;
-  --color-bad: #b91c1c; /* not satisfied / negative */
+  --color-bad: #b91c1c;
   --color-bad-soft: #fee2e2;
 }
 
@@ -29,9 +31,22 @@ body {
   height: 100%;
 }
 
+/* Cinematic backdrop: a teal ambient wash, two low headlight glows, and a dark vignette floor. */
 body {
-  background: var(--color-canvas);
+  background-color: var(--color-canvas);
+  background-image:
+    radial-gradient(60% 45% at 50% 8%, rgba(45, 212, 191, 0.08), transparent 70%),
+    radial-gradient(22% 30% at 16% 82%, rgba(148, 220, 255, 0.14), transparent 70%),
+    radial-gradient(22% 30% at 84% 82%, rgba(148, 220, 255, 0.14), transparent 70%),
+    radial-gradient(120% 90% at 50% 120%, rgba(0, 0, 0, 0.6), transparent 60%);
+  background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Teal focus glow for the composer pill. */
+.glow-focus:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.4), 0 0 28px rgba(45, 212, 191, 0.18);
 }

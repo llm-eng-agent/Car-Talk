@@ -152,7 +152,7 @@ async function ask(page: Page, text: string): Promise<void> {
 test("§28 acceptance conversation renders every Phase-9 behavior", async ({ page }) => {
   await mockChat(page);
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /מה תרצו לדעת/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /על הפרק/ })).toBeVisible();
 
   // Turn 1 — recommendation: preferences stored, candidates proposed.
   await ask(page, "אני מחפש רכב משפחתי לשלושה ילדים, נוחות ומרחב חשובים לי מביצועים");
@@ -181,8 +181,9 @@ test("§28 acceptance conversation renders every Phase-9 behavior", async ({ pag
   await ask(page, "מי מהם אמין יותר אחרי חמש שנים?");
   await expect(page.getByTestId("terminal-message").last()).toContainText("אינן מספקות מספיק מידע");
 
-  // Reset conversation: memory and messages cleared.
+  // Reset conversation: back to the welcome screen; memory, messages, and the panel are cleared.
   await page.getByTestId("new-conversation").click();
-  await expect(page.getByRole("heading", { name: /מה תרצו לדעת/ })).toBeVisible();
-  await expect(panel).toContainText("עדיין לא ציינת העדפות");
+  await expect(page.getByRole("heading", { name: /על הפרק/ })).toBeVisible();
+  await expect(page.getByTestId("answer")).toHaveCount(0);
+  await expect(panel).toBeHidden();
 });
