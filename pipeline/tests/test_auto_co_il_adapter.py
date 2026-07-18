@@ -66,7 +66,7 @@ def synthetic_html() -> str:
 
 def test_extracts_article_title(synthetic_html: str) -> None:
     document = extract_document(synthetic_html, _source())
-    assert document.title == "סינטטיקה ZX – מבחן דרכים"  # noqa: RUF001 (en dash is real content)
+    assert document.title == "סינטטיקה ZX – מבחן דרכים"
 
 
 def test_metadata_comes_from_manifest_not_prose(synthetic_html: str) -> None:
