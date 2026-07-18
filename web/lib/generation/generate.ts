@@ -12,6 +12,7 @@ import { validateGenerationOutput } from "./validate";
 
 const MAX_OUTPUT_TOKENS = 1200; // spec §14.1
 const MAX_ATTEMPTS = 2; // one call + one retry (spec §22.4)
+const GENERATION_TIMEOUT_MS = 35_000; // spec §14.1
 
 // A single structured model invocation. Returns the parsed object (schema-shaped) or throws.
 export type StructuredModel = (req: { system: string; prompt: string }) => Promise<unknown>;
@@ -61,6 +62,10 @@ export function createDefaultModel(config: RetrievalConfig): StructuredModel {
       system,
       prompt,
       maxOutputTokens: MAX_OUTPUT_TOKENS,
+      // The single retry is the outer generateAnswer loop, not the SDK's; bound each call to the
+      // spec's 35s generation timeout (spec §14.1, §22.4).
+      maxRetries: 0,
+      abortSignal: AbortSignal.timeout(GENERATION_TIMEOUT_MS),
       providerOptions: { openai: { reasoningEffort: "low" } },
     });
     return object;

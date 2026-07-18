@@ -6,12 +6,12 @@ import { answer } from "./answer";
 import { type StructuredModel } from "./generate";
 import { type GenerationOutput } from "./schema";
 
-function chunk(vehicleId: string): RetrievedChunk {
+function chunk(vehicleId: string, i = 0): RetrievedChunk {
   return {
-    chunkId: `${vehicleId}::b0::c0`,
+    chunkId: `${vehicleId}::b0::c${i}`,
     documentId: vehicleId,
     vehicleId,
-    score: 1,
+    score: 1 - i * 0.1,
     sectionHeading: "Range",
     contentType: "section",
     content: "טווח 500 קמ",
@@ -77,6 +77,17 @@ describe("answer pipeline", () => {
     expect(res.output).toEqual(goodOutput);
     expect(res.citations.map((c) => c.id)).toEqual(["C1"]);
     expect(calls()).toBe(1);
+  });
+
+  it("returns only the source cards the answer actually cites", async () => {
+    // Context gets two chunks (C1, C2) but the model cites only C1.
+    const { model } = countingModel(goodOutput);
+    const retriever = retrieverReturning((o) => (o?.vehicleIds ? [chunk("mg_s6", 0), chunk("mg_s6", 1)] : []));
+
+    const res = await answer("ספר לי על MG S6", undefined, { retriever, model });
+
+    expect(res.status).toBe("complete");
+    expect(res.citations.map((c) => c.id)).toEqual(["C1"]);
   });
 
   it("returns a safe error when retrieval throws (no model call)", async () => {

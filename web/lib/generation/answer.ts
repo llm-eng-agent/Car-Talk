@@ -68,5 +68,18 @@ export async function answer(
     // One retry already happened inside generateAnswer; return a safe fallback (spec §22.4/§22.5).
     return { status: "error", mode, citations: [], message: GENERATION_FALLBACK_MESSAGE };
   }
-  return { status: result.output.status, mode, output: result.output, citations: built.citations };
+  // Expose only the source cards the answer actually cites, so the UI never shows a source that
+  // backs no visible claim.
+  const used = citedIds(result.output);
+  const citations = built.citations.filter((c) => used.has(c.id));
+  return { status: result.output.status, mode, output: result.output, citations };
+}
+
+// The citation IDs referenced anywhere in the validated output.
+function citedIds(output: GenerationOutput): Set<string> {
+  return new Set([
+    ...output.overview.citation_ids,
+    ...output.aspect_assessments.flatMap((a) => a.citation_ids),
+    ...output.constraint_assessments.flatMap((c) => c.citation_ids),
+  ]);
 }
