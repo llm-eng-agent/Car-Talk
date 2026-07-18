@@ -27,7 +27,7 @@ from typing import Any
 
 from parsel import Selector, SelectorList
 
-from car_talk_pipeline.scraping.models import (
+from car_talk_pipeline.models import (
     CanonicalDocument,
     ProsCons,
     QAPair,

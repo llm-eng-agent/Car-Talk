@@ -8,10 +8,14 @@ dependencies = [
     "scrapy>=2.11",
     "parsel>=1.9",
     "pydantic>=2.7",
+    "openai>=2.46.0",
+    "tiktoken>=0.13.0",
+    "python-dotenv>=1.2.2",
 ]
 
 [project.scripts]
-car-talk-scrape = "car_talk_pipeline.scraping.run:main"
+car-talk-scrape = "car_talk_pipeline.ingest:main"
+car-talk-embed = "car_talk_pipeline.embedding:main"
 
 [dependency-groups]
 dev = [
@@ -35,14 +39,16 @@ src = ["src", "tests"]
 [tool.ruff.lint]
 # Correctness, readability, security-leaning defaults (see code_guidelines.md).
 select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "PTH", "RUF"]
+# Hebrew-first content: ambiguous-unicode lints (Latin lookalikes) are noise here.
+ignore = ["RUF001", "RUF002", "RUF003"]
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
 files = ["src", "tests"]
-# Scrapy ships without complete type stubs; ignore its missing imports only.
+# Scrapy and tiktoken ship without complete type stubs; ignore their missing imports only.
 [[tool.mypy.overrides]]
-module = ["scrapy.*"]
+module = ["scrapy.*", "tiktoken.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

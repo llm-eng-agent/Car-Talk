@@ -8,7 +8,7 @@ that step. One PR per task; only the owner merges.
 
 Legend: ✅ done · 🔄 in progress · ⬜ not started · ⛔ blocked
 
-_Last updated: 2026-07-18_
+_Last updated: 2026-07-18 (Phase 3a)_
 
 ## Status by phase
 
@@ -18,7 +18,8 @@ _Last updated: 2026-07-18_
 | Spike B — Hybrid retrieval | ⬜ | Needs OpenAI + Qdrant keys |
 | Spike C — Structured generation | ⬜ | Needs OpenAI key; verify model id first |
 | Phase 2 — Full ingestion (8 articles) | ✅ | All 8 extracted + validated; idempotent |
-| Phase 3 — Chunking + embeddings + Qdrant | ⛔ | Blocked on OpenAI + Qdrant keys |
+| Phase 3a — Chunking + embeddings | ✅ | 162 chunks embedded (1536-d); cache works |
+| Phase 3b — Qdrant indexing | ⛔ | Blocked on Qdrant key |
 | Phase 4 — Evaluation dataset (30 Hebrew queries) | ⬜ | |
 | Phase 5 — Retrieval orchestrator | ⬜ | |
 | Phase 6 — Context + generation | ⬜ | |
@@ -61,9 +62,29 @@ Spike A adapter handled every article):
 Note: raw HTML and full processed documents remain git-ignored (`.tmp/`); only the
 synthetic example is committed.
 
+## ✅ Phase 3a — Chunking + embeddings
+
+Structure-aware chunker + dense embeddings (Qdrant indexing deferred to 3b):
+
+- Chunker per the locked contract (soft 400 / pack 450 / hard 500, within-section, no
+  overlap; oversized paragraphs split at sentence boundaries). Token counter is injected
+  (`tiktoken` in production, a word counter in tests → offline CI).
+- FAQ Q&A and pros/cons chunked as their own tagged synthetic sections
+  (`content_type` = section/qa/pros_cons, `provenance` = publisher_faq for Q&A).
+- Embedding: `text-embedding-3-small`, 1536-d, behind an `EmbeddingProvider` interface;
+  batching, timeout, retry, response-dimension validation.
+- On-disk embedding cache (`.tmp/embeddings/`) keyed by content hash + model version.
+- **Live run:** 162 chunks across the 8 articles (147 section / 13 Q&A / 2 pros/cons),
+  all ≤500 tokens (max 489), all 1536-d. Re-run embeds 0 (fully cached).
+- OpenAI key loaded from git-ignored `.env` via `config.py`; never logged.
+- Lean module layout for the POC: the pipeline is 8 flat modules under
+  `car_talk_pipeline/` (`config`, `hashing`, `models`, `adapter`, `ingest`, `chunking`,
+  `embedding`) — no thin one-purpose files, no interface/impl split for a single provider.
+
 ## Open flags / dependencies
 
-- ⛔ **API keys not yet available**: OpenAI, Qdrant Cloud, Upstash — required from Phase 3 on.
+- ✅ **OpenAI key** available (in git-ignored `.env`).
+- ⛔ **Qdrant Cloud + Upstash keys** not yet available — Qdrant needed for Phase 3b indexing.
 - ⚠️ Verify the spec's model id `gpt-5.6-terra` + OpenAI Responses API against a live
   account **before** the generation phases.
 - When building citations/generation: present FAQ Q&A as *publisher info* (`publisher_faq`),
@@ -75,4 +96,5 @@ synthetic example is committed.
 |---|---|---|
 | #1 | Ingestion foundation and Spike A scraping | Merged |
 | #2 | PROGRESS.md progress tracker | Merged |
-| #3 | Phase 2 — full ingestion of 8 articles | Open |
+| #3 | Phase 2 — full ingestion of 8 articles | Merged |
+| #4 | Phase 3a — chunking + embeddings | Open |

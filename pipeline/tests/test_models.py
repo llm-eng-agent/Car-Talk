@@ -6,8 +6,13 @@ from pathlib import Path
 
 import pytest
 
-from car_talk_pipeline.scraping.manifest import ManifestError, find_source, load_manifest
-from car_talk_pipeline.scraping.models import ArticleType, CoverageScope
+from car_talk_pipeline.models import (
+    ArticleType,
+    CoverageScope,
+    ManifestError,
+    find_source,
+    load_manifest,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOURCES_PATH = REPO_ROOT / "data" / "sources.json"

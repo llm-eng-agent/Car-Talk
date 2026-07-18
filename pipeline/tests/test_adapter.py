@@ -12,13 +12,13 @@ from pathlib import Path
 
 import pytest
 
-from car_talk_pipeline.scraping.auto_co_il_adapter import (
+from car_talk_pipeline.adapter import (
     INTRODUCTION_HEADING,
     ExtractionError,
     extract_document,
     normalized_content,
 )
-from car_talk_pipeline.scraping.models import (
+from car_talk_pipeline.models import (
     ArticleType,
     CoverageScope,
     QASource,
@@ -66,7 +66,7 @@ def synthetic_html() -> str:
 
 def test_extracts_article_title(synthetic_html: str) -> None:
     document = extract_document(synthetic_html, _source())
-    assert document.title == "סינטטיקה ZX – מבחן דרכים"  # noqa: RUF001 (en dash is real content)
+    assert document.title == "סינטטיקה ZX – מבחן דרכים"
 
 
 def test_metadata_comes_from_manifest_not_prose(synthetic_html: str) -> None:
