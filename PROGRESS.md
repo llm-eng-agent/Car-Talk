@@ -27,7 +27,7 @@ _Last updated: 2026-07-18 (Phase 10: security + reliability)_
 | Phase 8 — Session memory | ✅ | State model + deterministic reducer/validation in answer(); browser persistence is Phase 9 |
 | Phase 9 — User interface (Next.js) | ✅ | Chat UI + /api/chat wrapping answer(); source cards, recommendation/trade-off, preference panel, reset; RTL; §28 Playwright e2e + live smoke |
 | Phase 10 — Security + reliability | ✅ | Pluggable rate limit (Upstash/in-memory) + 429; /api/health; structured trace logs (§21.3); hardening tests; most DoD already met in earlier phases |
-| Phase 11 — Deployment (Vercel + Qdrant Cloud) | ⬜ | |
+| Phase 11 — Deployment (Vercel + Qdrant Cloud) | 🔄 | Prep merged (Node pin + `docs/deploy_vercel.md`); Dashboard connect + env + deploy next |
 
 ## ✅ Spike A — Scraping (PR #1, merged 2026-07-18)
 
@@ -368,4 +368,5 @@ before Vercel, since serverless makes in-memory per-instance).
 | #15 | Phase 8 — session memory (state model + reducer) | Merged |
 | #16 | Phase 9 — Next.js chat UI (route + client + §28 e2e) | Merged |
 | #17 | Rotating "thinking" messages | Merged |
-| #18 | Phase 10 — security + reliability (rate limit, health, logs) | Open |
+| #18 | Phase 10 — security + reliability (rate limit, health, logs) | Merged |
+| #19 | Phase 11 prep — Node pin + Vercel deploy guide | Open |
