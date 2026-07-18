@@ -27,7 +27,9 @@ const TONE_CLASS: Record<"good" | "warn" | "bad" | "neutral", string> = {
   neutral: "bg-surface-muted text-ink-soft",
 };
 
-export function AnswerView({ result }: { result: AnswerResult }) {
+// `namespace` uniquely identifies this turn. Citation ids restart at C1 per answer, so anchors must
+// be namespaced (source-<turn>-C1) — otherwise a chip in a later turn jumps to an earlier turn's card.
+export function AnswerView({ result, namespace }: { result: AnswerResult; namespace: string }) {
   // Terminal / error turns: a single message card, tinted by status.
   if (!result.output) {
     const tone =
@@ -47,12 +49,12 @@ export function AnswerView({ result }: { result: AnswerResult }) {
   return (
     <div className="flex flex-col gap-4" data-testid="answer">
       <p className="text-[15px] leading-7 text-ink whitespace-pre-wrap">{output.overview.text}</p>
-      <CitationRefs ids={output.overview.citation_ids} />
+      <CitationRefs ids={output.overview.citation_ids} namespace={namespace} />
 
       {output.aspect_assessments.length > 0 && (
         <section className="flex flex-col gap-2" data-testid="aspects">
           {output.aspect_assessments.map((a, i) => (
-            <AspectRow key={`${a.aspect}-${i}`} a={a} />
+            <AspectRow key={`${a.aspect}-${i}`} a={a} namespace={namespace} />
           ))}
         </section>
       )}
@@ -61,7 +63,7 @@ export function AnswerView({ result }: { result: AnswerResult }) {
         <section className="flex flex-col gap-2" data-testid="constraints">
           <h3 className="text-xs font-semibold text-ink-soft">עמידה באילוצים</h3>
           {output.constraint_assessments.map((c, i) => (
-            <ConstraintRow key={`${c.constraint}-${c.vehicle_id}-${i}`} c={c} />
+            <ConstraintRow key={`${c.constraint}-${c.vehicle_id}-${i}`} c={c} namespace={namespace} />
           ))}
         </section>
       )}
@@ -85,12 +87,12 @@ export function AnswerView({ result }: { result: AnswerResult }) {
         </p>
       )}
 
-      {result.citations.length > 0 && <SourceList citations={result.citations} />}
+      {result.citations.length > 0 && <SourceList citations={result.citations} namespace={namespace} />}
     </div>
   );
 }
 
-function AspectRow({ a }: { a: AspectAssessment }) {
+function AspectRow({ a, namespace }: { a: AspectAssessment; namespace: string }) {
   const tone = ASSESSMENT_TONE[a.assessment];
   return (
     <div className="rounded-xl border border-line bg-surface px-4 py-3">
@@ -102,12 +104,12 @@ function AspectRow({ a }: { a: AspectAssessment }) {
         </span>
       </div>
       <p className="text-sm leading-6 text-ink-soft">{a.explanation}</p>
-      <CitationRefs ids={a.citation_ids} />
+      <CitationRefs ids={a.citation_ids} namespace={namespace} />
     </div>
   );
 }
 
-function ConstraintRow({ c }: { c: ConstraintAssessment }) {
+function ConstraintRow({ c, namespace }: { c: ConstraintAssessment; namespace: string }) {
   const tone = CONSTRAINT_STATUS_TONE[c.status];
   return (
     <div className="rounded-xl border border-line bg-surface px-4 py-2 text-sm">
@@ -120,7 +122,7 @@ function ConstraintRow({ c }: { c: ConstraintAssessment }) {
         </span>
       </div>
       {c.explanation && <p className="mt-1 text-ink-soft">{c.explanation}</p>}
-      <CitationRefs ids={c.citation_ids} />
+      <CitationRefs ids={c.citation_ids} namespace={namespace} />
     </div>
   );
 }
@@ -155,15 +157,16 @@ function RecommendationCard({ rec }: { rec: Recommendation }) {
   );
 }
 
-// Inline references to the source cards below (C1, C2, …). Each links to its card anchor.
-function CitationRefs({ ids }: { ids: string[] }) {
+// Inline references to the source cards below (C1, C2, …). Each links to its card anchor, namespaced
+// by turn so a chip only ever targets a card within its own answer.
+function CitationRefs({ ids, namespace }: { ids: string[]; namespace: string }) {
   if (ids.length === 0) return null;
   return (
     <div className="mt-1 flex flex-wrap gap-1">
       {ids.map((id) => (
         <a
           key={id}
-          href={`#source-${id}`}
+          href={`#source-${namespace}-${id}`}
           className="rounded bg-surface-muted px-1.5 py-0.5 text-xs font-medium text-brand hover:bg-brand-soft"
         >
           {id}
@@ -173,21 +176,21 @@ function CitationRefs({ ids }: { ids: string[] }) {
   );
 }
 
-function SourceList({ citations }: { citations: Citation[] }) {
+function SourceList({ citations, namespace }: { citations: Citation[]; namespace: string }) {
   return (
     <section className="flex flex-col gap-2" data-testid="sources">
       <h3 className="text-xs font-semibold text-ink-soft">מקורות</h3>
       {citations.map((c) => (
-        <SourceCard key={c.id} citation={c} />
+        <SourceCard key={c.id} citation={c} namespace={namespace} />
       ))}
     </section>
   );
 }
 
-function SourceCard({ citation }: { citation: Citation }) {
+function SourceCard({ citation, namespace }: { citation: Citation; namespace: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div id={`source-${citation.id}`} className="rounded-xl border border-line bg-surface px-4 py-3">
+    <div id={`source-${namespace}-${citation.id}`} className="rounded-xl border border-line bg-surface px-4 py-3">
       <div className="flex items-start gap-2">
         <span className="mt-0.5 shrink-0 rounded bg-brand px-1.5 py-0.5 text-xs font-bold text-white">
           {citation.id}

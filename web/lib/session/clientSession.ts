@@ -2,7 +2,7 @@
 // sent with every request; the server returns the canonical updated state (§16.6), which we store
 // back. No long-term memory, no DB — closing the tab ends the session. All state is re-validated
 // server-side, so a corrupted or tampered store is harmless (answer() runs sanitizeSession()).
-import { type SessionState } from "@/lib/generation/session";
+import { sanitizeSession, type SessionState } from "@/lib/generation/session";
 
 const STORAGE_KEY = "car-talk:session";
 
@@ -11,9 +11,12 @@ export function loadClientSession(): SessionState | undefined {
   const raw = window.sessionStorage.getItem(STORAGE_KEY);
   if (!raw) return undefined;
   try {
-    return JSON.parse(raw) as SessionState;
+    // Parse can yield any shape (old version, tampering). sanitizeSession() accepts `unknown` and
+    // rebuilds a valid SessionState from emptySession(), so the UI never dereferences a malformed
+    // object (e.g. `{}` → crash in PreferencePanel). This mirrors the server-side validation (§16.6).
+    return sanitizeSession(JSON.parse(raw));
   } catch {
-    return undefined; // corrupted store → start fresh; the server would reject it anyway
+    return undefined; // unparseable store → start fresh
   }
 }
 

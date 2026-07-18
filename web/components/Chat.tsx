@@ -24,6 +24,11 @@ export function Chat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Monotonic conversation generation. A reset bumps it; a response captured under an older
+  // generation is discarded, so a request in flight when "New conversation" is clicked can't
+  // resurrect a stale message/session after the UI was cleared.
+  const runIdRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
 
   // Restore session on mount (client-only; the server re-validates it on every request anyway).
   useEffect(() => {
@@ -38,6 +43,9 @@ export function Chat() {
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
+    const myRun = runIdRef.current; // this turn belongs to the current conversation generation
+    const controller = new AbortController();
+    abortRef.current = controller;
     setInput("");
     setMessages((m) => [...m, { role: "user", text: trimmed }]);
     setLoading(true);
@@ -46,13 +54,16 @@ export function Chat() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ message: trimmed, session }),
+        signal: controller.signal,
       });
       if (!res.ok) throw new Error(`status ${res.status}`);
       const result = (await res.json()) as AnswerResult;
+      if (runIdRef.current !== myRun) return; // a reset happened while awaiting → drop this response
       setMessages((m) => [...m, { role: "assistant", result }]);
       setSession(result.session);
       saveClientSession(result.session);
     } catch {
+      if (runIdRef.current !== myRun) return; // reset (or its abort) → don't surface a stale error
       setMessages((m) => [
         ...m,
         {
@@ -67,15 +78,18 @@ export function Chat() {
         },
       ]);
     } finally {
-      setLoading(false);
+      if (runIdRef.current === myRun) setLoading(false);
     }
   }
 
   function reset() {
+    runIdRef.current += 1; // invalidate any in-flight response
+    abortRef.current?.abort();
     clearClientSession();
     setSession(emptySession());
     setMessages([]);
     setInput("");
+    setLoading(false);
   }
 
   return (
@@ -111,7 +125,7 @@ export function Chat() {
                     </div>
                   ) : (
                     <div key={i} className="rounded-2xl bg-surface p-4 shadow-sm">
-                      <AnswerView result={m.result} />
+                      <AnswerView result={m.result} namespace={String(i)} />
                     </div>
                   ),
                 )}
