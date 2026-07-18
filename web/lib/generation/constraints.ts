@@ -17,6 +17,16 @@ export interface ParsedConstraints {
 export const POWERTRAINS: Powertrain[] = ["electric", "hybrid", "gasoline", "diesel"];
 export const TRANSMISSIONS: Transmission[] = ["automatic", "manual"];
 
+// Overlay `incoming`'s explicitly-stated constraint fields onto `prev`; unstated fields keep their
+// prior value (spec §16.4: a new explicit constraint overrides a conflicting prior one).
+export function mergeConstraints(prev: ParsedConstraints, incoming: ParsedConstraints): ParsedConstraints {
+  const merged: ParsedConstraints = { ...prev };
+  if (incoming.minimumSeats !== undefined) merged.minimumSeats = incoming.minimumSeats;
+  if (incoming.allowedPowertrains?.length) merged.allowedPowertrains = [...incoming.allowedPowertrains];
+  if (incoming.transmission) merged.transmission = incoming.transmission;
+  return merged;
+}
+
 const POWERTRAIN_ALIASES: Record<Powertrain, string[]> = {
   electric: ["חשמלי", "חשמלית", "electric", "ev"],
   hybrid: ["היברידי", "היברידית", "hybrid"],

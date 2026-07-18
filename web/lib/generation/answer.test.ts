@@ -176,6 +176,57 @@ describe("answer pipeline", () => {
     expect(calls()).toBe(0);
   });
 
+  it("honors a remembered priority to decide a comparison (lexicographic)", async () => {
+    const compTradeoff: GenerationOutput = {
+      status: "complete",
+      mode: "comparison",
+      overview: { text: "השוואה", citation_ids: ["C1"] },
+      aspect_assessments: [
+        { aspect: "performance", assessment: "vehicle_advantage", winner_vehicle_id: "audi_rs3", explanation: "x", citation_ids: ["C1"] },
+        { aspect: "space_practicality", assessment: "vehicle_advantage", winner_vehicle_id: "kia_ev9", explanation: "y", citation_ids: ["C2"] },
+      ],
+      constraint_assessments: [],
+      missing_information: [],
+      preference_updates: [],
+      usage_pattern_updates: [],
+      follow_up_question: null,
+    };
+    const { model } = countingModel(compTradeoff);
+    const retriever = retrieverReturning((o) => (o?.vehicleIds ? [chunk(o.vehicleIds[0])] : []));
+    const prior = { ...emptySession(), preferences: { priorities: ["performance" as const], constraints: {}, usagePatterns: [] } };
+
+    // The query names no aspect; without memory this is a Pareto trade-off (no winner).
+    const res = await answer("אאודי מול קיה", prior, { retriever, model });
+
+    expect(res.recommendation?.decisionRule).toBe("lexicographic");
+    expect(res.recommendation?.decision).toBe("audi_rs3");
+  });
+
+  it("applies a remembered constraint to eliminate a candidate", async () => {
+    const compConstraint: GenerationOutput = {
+      status: "complete",
+      mode: "comparison",
+      overview: { text: "השוואה", citation_ids: ["C1"] },
+      aspect_assessments: [],
+      constraint_assessments: [
+        { constraint: "minimum_seats", vehicle_id: "audi_rs3", status: "not_satisfied", explanation: "", citation_ids: ["C1"] },
+        { constraint: "minimum_seats", vehicle_id: "kia_ev9", status: "satisfied", explanation: "", citation_ids: ["C2"] },
+      ],
+      missing_information: [],
+      preference_updates: [],
+      usage_pattern_updates: [],
+      follow_up_question: null,
+    };
+    const { model } = countingModel(compConstraint);
+    const retriever = retrieverReturning((o) => (o?.vehicleIds ? [chunk(o.vehicleIds[0])] : []));
+    const prior = { ...emptySession(), preferences: { priorities: [], constraints: { minimumSeats: 7 }, usagePatterns: [] } };
+
+    const res = await answer("אאודי מול קיה", prior, { retriever, model });
+
+    expect(res.recommendation?.decision).toBe("kia_ev9");
+    expect(res.recommendation?.eliminated).toEqual([{ vehicleId: "audi_rs3", constraint: "minimum_seats" }]);
+  });
+
   it("returns a safe error when retrieval throws (no model call)", async () => {
     const { model, calls } = countingModel(goodOutput);
     const retriever: Retriever = {

@@ -72,6 +72,24 @@ describe("updateSession", () => {
     expect(after2.preferences.priorities).toEqual(["performance"]); // now it sticks
   });
 
+  it("lets a later explicit correction reorder priorities (override stale order)", () => {
+    const prev = { ...emptySession(), preferences: { priorities: ["performance" as const], constraints: {}, usagePatterns: [] } };
+    const s = updateSession(prev, turn({
+      output: out({ preference_updates: [{ aspect: "ride_comfort", priority: 1, source: "explicit", evidence_text: "נוחות" }] }),
+    }));
+    expect(s.preferences.priorities).toEqual(["ride_comfort", "performance"]);
+  });
+
+  it("orders multiple explicit priorities by their stated rank", () => {
+    const s = updateSession(emptySession(), turn({
+      output: out({ preference_updates: [
+        { aspect: "performance", priority: 2, source: "explicit", evidence_text: "ביצועים" },
+        { aspect: "ride_comfort", priority: 1, source: "explicit", evidence_text: "נוחות" },
+      ] }),
+    }));
+    expect(s.preferences.priorities).toEqual(["ride_comfort", "performance"]);
+  });
+
   it("does not turn a one-time question into a preference", () => {
     const s = updateSession(emptySession(), turn({ output: out({ preference_updates: [] }) }));
     expect(s.preferences.priorities).toEqual([]);

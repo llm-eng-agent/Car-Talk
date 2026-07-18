@@ -6,6 +6,7 @@
 import { loadVehicleCatalog } from "../retrieval/catalog";
 import { ASPECTS, type Aspect, type Route } from "../retrieval/types";
 import {
+  mergeConstraints,
   POWERTRAINS,
   TRANSMISSIONS,
   type ParsedConstraints,
@@ -124,16 +125,21 @@ export function updateSession(prev: SessionState, turn: SessionTurn): SessionSta
     if (turn.route === "comparison") next.comparisonVehicleIds = [...turn.resolvedVehicleIds];
   }
 
-  // Priorities: explicit updates stick immediately; inferred ones only after two turns (§249, §16.4).
-  for (const update of turn.output.preference_updates) {
-    if (!ASPECT_SET.has(update.aspect)) continue;
+  // Priorities. Explicit updates define/override the ranking: sorted by their stated priority and
+  // moved to the front, so a fresh explicit correction overrides a stale order (§16.4). Inferred
+  // updates only stick after two turns (§249) and are appended.
+  const explicit = turn.output.preference_updates.filter((u) => u.source === "explicit" && ASPECT_SET.has(u.aspect));
+  const inferred = turn.output.preference_updates.filter((u) => u.source !== "explicit" && ASPECT_SET.has(u.aspect));
+
+  if (explicit.length > 0) {
+    const ranked = [...explicit].sort((a, b) => a.priority - b.priority).map((u) => u.aspect as Aspect);
+    const rest = next.preferences.priorities.filter((a) => !ranked.includes(a));
+    next.preferences.priorities = [...dedupe(ranked), ...rest];
+  }
+  for (const update of inferred) {
     const aspect = update.aspect as Aspect;
-    if (update.source === "explicit") {
-      addPriority(next.preferences.priorities, aspect);
-    } else {
-      next.inferredCounts[aspect] = (next.inferredCounts[aspect] ?? 0) + 1;
-      if (next.inferredCounts[aspect] >= INFERRED_THRESHOLD) addPriority(next.preferences.priorities, aspect);
-    }
+    next.inferredCounts[aspect] = (next.inferredCounts[aspect] ?? 0) + 1;
+    if (next.inferredCounts[aspect] >= INFERRED_THRESHOLD) addPriority(next.preferences.priorities, aspect);
   }
 
   // Constraints: a new turn's explicitly-stated constraints override conflicting fields (§16.4).
@@ -157,12 +163,8 @@ function addPriority(priorities: Aspect[], aspect: Aspect): void {
   if (!priorities.includes(aspect)) priorities.push(aspect);
 }
 
-function mergeConstraints(prev: ParsedConstraints, incoming: ParsedConstraints): ParsedConstraints {
-  const merged: ParsedConstraints = { ...prev };
-  if (incoming.minimumSeats !== undefined) merged.minimumSeats = incoming.minimumSeats;
-  if (incoming.allowedPowertrains?.length) merged.allowedPowertrains = [...incoming.allowedPowertrains];
-  if (incoming.transmission) merged.transmission = incoming.transmission;
-  return merged;
+function dedupe(aspects: Aspect[]): Aspect[] {
+  return [...new Set(aspects)];
 }
 
 function sanitizeConstraints(raw: unknown): ParsedConstraints {

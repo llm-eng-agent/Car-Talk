@@ -6,7 +6,7 @@ import { loadRetrievalConfig } from "../retrieval/config";
 import { createLiveRetriever } from "../retrieval/factory";
 import { orchestrate, type Retriever } from "../retrieval/orchestrator";
 import { type Citation } from "./citations";
-import { parseConstraints } from "./constraints";
+import { mergeConstraints, parseConstraints } from "./constraints";
 import { buildContext, type SessionContext } from "./context";
 import { createDefaultModel, generateAnswer, type StructuredModel } from "./generate";
 import { recommend, type Recommendation } from "./recommend";
@@ -62,8 +62,11 @@ export async function answer(
     };
   }
 
-  const constraints = parseConstraints(userQuery);
-  const built = buildContext(userQuery, pkg, toContextView(state), constraints);
+  // Remembered constraints carry forward, so the model assesses them even when this turn doesn't
+  // restate them (spec §16). A newly-stated constraint overrides the remembered one.
+  const currentConstraints = parseConstraints(userQuery);
+  const effectiveConstraints = mergeConstraints(state.preferences.constraints, currentConstraints);
+  const built = buildContext(userQuery, pkg, toContextView(state), effectiveConstraints);
   const mode = modeForRoute(pkg.route);
   const model = deps.model ?? createDefaultModel(loadRetrievalConfig());
   const result = await generateAnswer(
@@ -81,25 +84,26 @@ export async function answer(
   const used = citedIds(result.output);
   const citations = built.citations.filter((c) => used.has(c.id));
 
-  // The application — not the model — makes the final pick, for multi-vehicle answers (spec §17.8).
-  // Never surface a recommendation when evidence is insufficient (spec §14.6).
-  const canRecommend = result.output.status === "complete" || result.output.status === "partial";
-  const recommendation =
-    pkg.vehicles.length > 1 && canRecommend
-      ? recommend(result.output, {
-          candidateVehicleIds: pkg.vehicles.map((v) => v.vehicleId),
-          priorityAspects: pkg.aspects,
-          constraints,
-        })
-      : undefined;
-
   const updatedSession = updateSession(state, {
     userQuery,
     resolvedVehicleIds: pkg.vehicles.map((v) => v.vehicleId),
     route: pkg.route,
     output: result.output,
-    constraints,
+    constraints: currentConstraints,
   });
+
+  // The application — not the model — makes the final pick, for multi-vehicle answers (spec §17.8).
+  // Never surface a recommendation when evidence is insufficient (spec §14.6). The pick honors
+  // remembered priorities/constraints, not just this turn's (this turn's focus leads the order).
+  const canRecommend = result.output.status === "complete" || result.output.status === "partial";
+  const recommendation =
+    pkg.vehicles.length > 1 && canRecommend
+      ? recommend(result.output, {
+          candidateVehicleIds: pkg.vehicles.map((v) => v.vehicleId),
+          priorityAspects: [...new Set([...pkg.aspects, ...updatedSession.preferences.priorities])],
+          constraints: effectiveConstraints,
+        })
+      : undefined;
 
   return { status: result.output.status, mode, output: result.output, citations, recommendation, session: updatedSession };
 }
