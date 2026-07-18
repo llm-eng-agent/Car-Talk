@@ -76,7 +76,32 @@ describe("answer pipeline", () => {
     expect(res.mode).toBe("single_vehicle");
     expect(res.output).toEqual(goodOutput);
     expect(res.citations.map((c) => c.id)).toEqual(["C1"]);
+    expect(res.recommendation).toBeUndefined(); // single vehicle → no recommendation
     expect(calls()).toBe(1);
+  });
+
+  it("attaches a deterministic recommendation for a multi-vehicle answer", async () => {
+    const compOutput: GenerationOutput = {
+      status: "complete",
+      mode: "comparison",
+      overview: { text: "השוואה", citation_ids: ["C1"] },
+      aspect_assessments: [
+        { aspect: "performance", assessment: "vehicle_advantage", winner_vehicle_id: "audi_rs3", explanation: "חזק יותר", citation_ids: ["C1"] },
+      ],
+      constraint_assessments: [],
+      missing_information: [],
+      preference_updates: [],
+      usage_pattern_updates: [],
+      follow_up_question: null,
+    };
+    const { model } = countingModel(compOutput);
+    const retriever = retrieverReturning((o) => (o?.vehicleIds ? [chunk(o.vehicleIds[0])] : []));
+
+    const res = await answer("אאודי מול קיה", undefined, { retriever, model });
+
+    expect(res.mode).toBe("comparison");
+    expect(res.recommendation?.decision).toBe("audi_rs3");
+    expect(res.recommendation?.decisionRule).toBe("pareto");
   });
 
   it("returns only the source cards the answer actually cites", async () => {
@@ -88,6 +113,30 @@ describe("answer pipeline", () => {
 
     expect(res.status).toBe("complete");
     expect(res.citations.map((c) => c.id)).toEqual(["C1"]);
+  });
+
+  it("does not surface a recommendation when the answer is insufficient_evidence", async () => {
+    const insufficient: GenerationOutput = {
+      status: "insufficient_evidence",
+      mode: "comparison",
+      overview: { text: "", citation_ids: [] },
+      aspect_assessments: [],
+      constraint_assessments: [
+        { constraint: "minimum_seats", vehicle_id: "aion_ht", status: "not_satisfied", explanation: "", citation_ids: ["C1"] },
+        { constraint: "minimum_seats", vehicle_id: "kia_ev9", status: "satisfied", explanation: "", citation_ids: ["C2"] },
+      ],
+      missing_information: [],
+      preference_updates: [],
+      usage_pattern_updates: [],
+      follow_up_question: null,
+    };
+    const { model } = countingModel(insufficient);
+    const retriever = retrieverReturning((o) => (o?.vehicleIds ? [chunk(o.vehicleIds[0])] : []));
+
+    const res = await answer("איון מול קיה עם 7 מקומות", undefined, { retriever, model });
+
+    expect(res.status).toBe("insufficient_evidence");
+    expect(res.recommendation).toBeUndefined();
   });
 
   it("returns a safe error when retrieval throws (no model call)", async () => {

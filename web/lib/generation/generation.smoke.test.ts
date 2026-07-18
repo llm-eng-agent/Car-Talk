@@ -49,6 +49,23 @@ describe.skipIf(!hasEnv)("live generation pipeline", () => {
     }
   }, GEN_TIMEOUT);
 
+  it("returns a deterministic recommendation for a constrained recommendation query", async () => {
+    const res = await answer("אני מחפש SUV חשמלי משפחתי עם 7 מקומות. מה מומלץ?");
+
+    expect(["complete", "partial", "insufficient_evidence"]).toContain(res.status);
+    if (res.status === "insufficient_evidence") return;
+
+    expect(res.mode).toBe("recommendation");
+    expect(res.recommendation).toBeDefined();
+    // The application made the call deterministically.
+    expect(["constraint", "lexicographic", "pareto", "none"]).toContain(res.recommendation!.decisionRule);
+    // Any decision must be one of the retrieved candidates (never invented).
+    if (res.recommendation!.decision) {
+      const candidates = new Set(res.citations.map((c) => c.vehicleId));
+      expect(candidates.has(res.recommendation!.decision)).toBe(true);
+    }
+  }, GEN_TIMEOUT);
+
   it("abstains for an out-of-corpus vehicle without a generation call", async () => {
     const res = await answer("האם כדאי לקנות טויוטה קורולה 2026?");
 

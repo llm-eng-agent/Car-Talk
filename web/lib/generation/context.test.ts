@@ -68,6 +68,22 @@ describe("buildContext", () => {
     expect(contextText).toContain("[C1]\nSection: Section 0\nContent: content-mg_s6-0");
   });
 
+  it("renders a HARD CONSTRAINTS section when constraints are parsed, else None", () => {
+    const withNone = buildContext("q", pkg("single", [{ vehicleId: "mg_s6", chunks: [chunk("mg_s6", 0)] }]));
+    expect(withNone.contextText).toContain("HARD CONSTRAINTS\nNone");
+
+    const withConstraints = buildContext(
+      "q",
+      pkg("comparison", [
+        { vehicleId: "kia_ev9", chunks: [chunk("kia_ev9", 0)] },
+        { vehicleId: "genesis_gv80", chunks: [chunk("genesis_gv80", 0)] },
+      ]),
+      undefined,
+      { minimumSeats: 7, allowedPowertrains: ["electric"] },
+    );
+    expect(withConstraints.contextText).toContain("HARD CONSTRAINTS\nminimum_seats: 7\nallowed_powertrains: electric");
+  });
+
   it("renders session sections only when provided, else None", () => {
     const withNone = buildContext("q", pkg("single", [{ vehicleId: "mg_s6", chunks: [chunk("mg_s6", 0)] }]));
     expect(withNone.contextText).toContain("SESSION PREFERENCES\nNone");

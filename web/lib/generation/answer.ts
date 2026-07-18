@@ -6,8 +6,10 @@ import { loadRetrievalConfig } from "../retrieval/config";
 import { createLiveRetriever } from "../retrieval/factory";
 import { orchestrate, type Retriever } from "../retrieval/orchestrator";
 import { type Citation } from "./citations";
+import { parseConstraints } from "./constraints";
 import { buildContext, type SessionContext } from "./context";
 import { createDefaultModel, generateAnswer, type StructuredModel } from "./generate";
+import { recommend, type Recommendation } from "./recommend";
 import { modeForRoute, terminalResponse } from "./respond";
 import { type GenerationMode, type GenerationOutput, type GenerationStatus } from "./schema";
 
@@ -16,6 +18,7 @@ export interface AnswerResult {
   mode: GenerationMode | null;
   output?: GenerationOutput; // present for a generated answer
   citations: Citation[]; // resolved source cards (empty for terminal / error)
+  recommendation?: Recommendation; // present for multi-vehicle answers (comparison / recommendation)
   message?: string; // for terminal (out_of_scope / insufficient) and error/fallback states
   unresolvedMention?: string;
 }
@@ -55,7 +58,8 @@ export async function answer(
     };
   }
 
-  const built = buildContext(userQuery, pkg, session);
+  const constraints = parseConstraints(userQuery);
+  const built = buildContext(userQuery, pkg, session, constraints);
   const mode = modeForRoute(pkg.route);
   const model = deps.model ?? createDefaultModel(loadRetrievalConfig());
   const result = await generateAnswer(
@@ -72,7 +76,20 @@ export async function answer(
   // backs no visible claim.
   const used = citedIds(result.output);
   const citations = built.citations.filter((c) => used.has(c.id));
-  return { status: result.output.status, mode, output: result.output, citations };
+
+  // The application — not the model — makes the final pick, for multi-vehicle answers (spec §17.8).
+  // Never surface a recommendation when evidence is insufficient (spec §14.6).
+  const canRecommend = result.output.status === "complete" || result.output.status === "partial";
+  const recommendation =
+    pkg.vehicles.length > 1 && canRecommend
+      ? recommend(result.output, {
+          candidateVehicleIds: pkg.vehicles.map((v) => v.vehicleId),
+          priorityAspects: pkg.aspects,
+          constraints,
+        })
+      : undefined;
+
+  return { status: result.output.status, mode, output: result.output, citations, recommendation };
 }
 
 // The citation IDs referenced anywhere in the validated output.
