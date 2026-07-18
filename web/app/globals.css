@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+/* Car-Talk automotive advisory identity (spec §19.6): a professional review product, not a
+   generic chat clone. Graphite canvas, deep-blue primary, evidence-tinted state colors. */
+@theme {
+  --font-sans: "Assistant", "Heebo", ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
+
+  --color-canvas: #0f1720; /* page background (graphite) */
+  --color-surface: #ffffff; /* cards */
+  --color-surface-muted: #f1f5f9;
+  --color-ink: #0f1720; /* primary text on light surfaces */
+  --color-ink-soft: #475569;
+  --color-line: #e2e8f0;
+
+  --color-brand: #1e3a8a; /* deep automotive blue */
+  --color-brand-soft: #eef2ff;
+  --color-accent: #0ea5a4; /* electric teal */
+
+  --color-good: #15803d; /* satisfied / positive */
+  --color-good-soft: #dcfce7;
+  --color-warn: #b45309; /* trade-off / partial */
+  --color-warn-soft: #fef3c7;
+  --color-bad: #b91c1c; /* not satisfied / negative */
+  --color-bad-soft: #fee2e2;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
