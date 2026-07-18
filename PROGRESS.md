@@ -8,7 +8,7 @@ that step. One PR per task; only the owner merges.
 
 Legend: ✅ done · 🔄 in progress · ⬜ not started · ⛔ blocked
 
-_Last updated: 2026-07-18 (Phase 7: deterministic recommendation engine)_
+_Last updated: 2026-07-18 (Phase 9: Next.js chat UI)_
 
 ## Status by phase
 
@@ -25,7 +25,7 @@ _Last updated: 2026-07-18 (Phase 7: deterministic recommendation engine)_
 | Phase 6 — Context + generation | ✅ | 6a: context/citations/schema/validation; 6b: live gpt-5.6-terra call + answer() pipeline (verified live) |
 | Phase 7 — Recommendation engine | ✅ | Deterministic: constraints → lexicographic → Pareto → trade-off; wired into answer() |
 | Phase 8 — Session memory | ✅ | State model + deterministic reducer/validation in answer(); browser persistence is Phase 9 |
-| Phase 9 — User interface (Next.js) | ⬜ | |
+| Phase 9 — User interface (Next.js) | ✅ | Chat UI + /api/chat wrapping answer(); source cards, recommendation/trade-off, preference panel, reset; RTL; §28 Playwright e2e + live smoke |
 | Phase 10 — Security + reliability | ⬜ | |
 | Phase 11 — Deployment (Vercel + Qdrant Cloud) | ⬜ | |
 
@@ -278,6 +278,36 @@ with each request is Phase 9.
 - Also hardened the live recommendation smoke to accept the spec's safe-fallback (a complex
   3-vehicle recommendation can occasionally exceed the 1200-token cap → fallback, which is correct).
 
+## ✅ Phase 9 — user interface (Next.js chat UI)
+
+The online surface (spec §19/§20.1) — the first time every prior phase runs together end-to-end in a
+real browser. "Fork and simplify the Vercel template" (§19.1) here means adopting the building blocks
+§19.3 keeps (Tailwind, chat layout, loading/error states) without dragging in what §19.4 removes
+(auth, DB, uploads, Blob, artifacts, model selector) — none of it is imported in the first place.
+
+- **`web/app/api/chat/route.ts`** — the single online endpoint (§20.1): `POST { message, session }` →
+  wraps the existing `answer()` → validated `AnswerResult` JSON. Input validation (non-empty, ≤2000
+  chars), request-scoped structured log (§21, no message text/keys), safe error shapes (no stack).
+  Secrets and the OpenAI/Qdrant clients stay server-side; `runtime = "nodejs"`.
+- **Browser session (§16.2)** — `web/lib/session/clientSession.ts` persists `SessionState` in
+  `sessionStorage`, sent with each request; the server-returned canonical state is stored back. The
+  server re-runs `sanitizeSession()` inside `answer()`, so a tampered store is harmless. Reset wipes it.
+- **Answer is a structured JSON object, not a token stream** — so the route returns JSON and the client
+  renders the validated shape (no `useChat` streaming transport); a processing-stage indicator shows
+  while awaiting.
+- **UI** — `web/components/{Chat,AnswerView,PreferencePanel}.tsx` + `web/lib/ui/labels.ts` (Hebrew
+  labels for every locked enum + `vehicleName()` from the shared catalog). Renders overview with inline
+  citation chips, aspect/constraint assessments, the deterministic recommendation with a **trade-off**
+  badge, missing-information, follow-up, terminal `out_of_scope`/`insufficient_evidence`/`error`
+  states, expandable **source cards** (§19.5), and a live **preference panel**. Full RTL + an
+  automotive graphite/deep-blue visual identity (Tailwind v4).
+- **Verification** — `typecheck`/`build`/`test` (113) green; a **Playwright** e2e drives the §28
+  acceptance conversation (4 turns) against a mocked route (CI-safe, §27A) and asserts every DoD
+  behavior. A **live run** through the real route (MG S6) returned `status: complete` with 3 citations
+  and remembered `mg_s6`; a screenshot confirmed RTL + identity + trade-off + expandable sources.
+- Built **Vercel-ready** (§20): server routes only, no local-disk persistence, secrets non-`NEXT_PUBLIC_`
+  — so Phase 11 deployment is mostly env wiring.
+
 ## Open flags / dependencies
 
 - ✅ **OpenAI key** available (in git-ignored `.env`).
@@ -304,4 +334,5 @@ with each request is Phase 9.
 | #12 | Phase 6b — live structured generation + answer pipeline | Merged |
 | #13 | Phase 7 — deterministic recommendation engine | Merged |
 | #14 | Witty rotating out-of-scope message | Merged |
-| #15 | Phase 8 — session memory (state model + reducer) | Open |
+| #15 | Phase 8 — session memory (state model + reducer) | Merged |
+| #16 | Phase 9 — Next.js chat UI (route + client + §28 e2e) | Open |
