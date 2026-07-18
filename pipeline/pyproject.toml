@@ -18,6 +18,7 @@ dependencies = [
 car-talk-scrape = "car_talk_pipeline.ingest:main"
 car-talk-embed = "car_talk_pipeline.embedding:main"
 car-talk-index = "car_talk_pipeline.qdrant_index:main"
+car-talk-eval = "car_talk_pipeline.evaluate:main"
 
 [dependency-groups]
 dev = [
