@@ -8,7 +8,7 @@ that step. One PR per task; only the owner merges.
 
 Legend: ✅ done · 🔄 in progress · ⬜ not started · ⛔ blocked
 
-_Last updated: 2026-07-18 (Phase 10: security + reliability)_
+_Last updated: 2026-07-18 (Phase 11: deployed to Vercel — POC complete 🎉)_
 
 ## Status by phase
 
@@ -27,7 +27,7 @@ _Last updated: 2026-07-18 (Phase 10: security + reliability)_
 | Phase 8 — Session memory | ✅ | State model + deterministic reducer/validation in answer(); browser persistence is Phase 9 |
 | Phase 9 — User interface (Next.js) | ✅ | Chat UI + /api/chat wrapping answer(); source cards, recommendation/trade-off, preference panel, reset; RTL; §28 Playwright e2e + live smoke |
 | Phase 10 — Security + reliability | ✅ | Pluggable rate limit (Upstash/in-memory) + 429; /api/health; structured trace logs (§21.3); hardening tests; most DoD already met in earlier phases |
-| Phase 11 — Deployment (Vercel + Qdrant Cloud) | 🔄 | Prep merged (Node pin + `docs/deploy_vercel.md`); Dashboard connect + env + deploy next |
+| Phase 11 — Deployment (Vercel + Qdrant Cloud) | ✅ | **Live** at car-talk-ellie-26.vercel.app; health 200 + §28 comparison verified in production |
 
 ## ✅ Spike A — Scraping (PR #1, merged 2026-07-18)
 
@@ -337,6 +337,26 @@ with no stack. This phase adds the missing pieces:
 **Rate-limit note:** the earlier Upstash blocker is resolved by the pluggable fallback — the app runs
 now without Upstash keys (in-memory) and upgrades automatically when the keys are added (recommended
 before Vercel, since serverless makes in-memory per-instance).
+
+## ✅ Phase 11 — deployment (Vercel + Qdrant Cloud) — POC COMPLETE 🎉
+
+The online app is live on Vercel. All 11 phases are done.
+
+- **Deploy** — Dashboard + GitHub integration on the **Hobby** plan (team `Ellie_26`, project `car-talk`).
+  **Root Directory = `web`** (monorepo subdir); Next.js auto-detected; pnpm build. Prep in PR #19 pinned
+  Node 22 + pnpm and added `docs/deploy_vercel.md`.
+- **Secrets** — the four required env vars (`OPENAI_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`,
+  `QDRANT_COLLECTION`) set in Vercel, Production + Preview, no `NEXT_PUBLIC_`. Upstash skipped for now —
+  the in-memory rate-limit fallback runs; the pluggable limiter will pick up Upstash keys when added.
+- **Public access** — Vercel Authentication (Deployment Protection) was **disabled** so the production
+  URL is public.
+- **Live URL: https://car-talk-ellie-26.vercel.app**
+- **Verified in production (DoD §Phase 11):** `GET /api/health` → `200 {openai:true,qdrant:true}`; a live
+  §28 comparison ("EV9 vs GV80") returned `mode:comparison`, **6 balanced citations**, a **trade-off**
+  recommendation (no universal winner), and remembered both vehicles — proving the full pipeline
+  (Qdrant retrieval → gpt-5.6-terra generation → validation → recommendation → session) end-to-end.
+- Deploy did **not** scrape or reindex; the Qdrant Cloud index persists independently; a frontend
+  redeploy leaves the data untouched.
 
 ## Open flags / dependencies
 
