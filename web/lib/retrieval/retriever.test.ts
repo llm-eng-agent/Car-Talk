@@ -21,6 +21,8 @@ function payload(overrides: Record<string, unknown> = {}): Record<string, unknow
     section_heading: "intro",
     content_type: "section",
     content: "טקסט",
+    article_title: "מבחן דרכים MG S6",
+    source_url: "https://www.auto.co.il/mg-s6",
     ...overrides,
   };
 }
@@ -80,6 +82,8 @@ describe("HybridRetriever", () => {
       sectionHeading: "intro",
       contentType: "section",
       content: "טקסט",
+      articleTitle: "מבחן דרכים MG S6",
+      sourceUrl: "https://www.auto.co.il/mg-s6",
     });
   });
 

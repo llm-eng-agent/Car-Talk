@@ -12,6 +12,8 @@ function chunk(vehicleId: string, i = 0): RetrievedChunk {
     sectionHeading: "s",
     contentType: "section",
     content: `c-${vehicleId}-${i}`,
+    articleTitle: `${vehicleId} review`,
+    sourceUrl: `https://www.auto.co.il/${vehicleId}`,
   };
 }
 
