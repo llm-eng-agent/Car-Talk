@@ -4,7 +4,7 @@
 // to answer(), and emits a request-scoped structured log (spec §21).
 import { answer } from "@/lib/generation/answer";
 import { type SessionState } from "@/lib/generation/session";
-import { clientId, getRateLimiter } from "@/lib/security/rateLimit";
+import { clientId, getRateLimiter, safeCheck } from "@/lib/security/rateLimit";
 
 // The pipeline uses the Node OpenAI + Qdrant SDKs, so this route cannot run on the Edge runtime.
 export const runtime = "nodejs";
@@ -21,7 +21,9 @@ export async function POST(request: Request): Promise<Response> {
   const requestId = `req_${crypto.randomUUID().slice(0, 8)}`;
 
   // Rate limit before doing any work (§Phase 10). The identifier is a hash of the client IP.
-  const limit = await getRateLimiter().check(clientId(request.headers));
+  // safeCheck fails open on a limiter outage so the rate-limit dependency can never take chat down.
+  const { result: limit, error: limiterError } = await safeCheck(getRateLimiter(), clientId(request.headers));
+  if (limiterError) log({ requestId, event: "rate_limiter_error" });
   if (!limit.allowed) {
     log({ requestId, event: "rate_limited" });
     return new Response(JSON.stringify({ error: "rate_limited" }), {

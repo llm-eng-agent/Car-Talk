@@ -47,6 +47,7 @@ class UpstashRateLimiter implements RateLimiter {
       redis: new Redis({ url, token }),
       limiter: Ratelimit.slidingWindow(RATE_LIMIT, `${RATE_WINDOW_MS / 1000} s`),
       prefix: "car-talk:rl",
+      timeout: 2000, // if Redis is slow/unreachable, fail open after 2s rather than stall the request
     });
   }
 
@@ -71,11 +72,27 @@ export function getRateLimiter(): RateLimiter {
   return cached;
 }
 
-// A stable, non-reversible per-client id: HMAC-SHA256 of the forwarded IP. The raw IP is never
-// stored. Falls back to a shared bucket when no IP is present.
+// Runs a limit check that can never take the route down. If the limiter throws (e.g. an Upstash
+// Redis outage / bad token / timeout), we FAIL OPEN — availability over strict limiting — and flag
+// the error so the caller can log it. The route must call this rather than limiter.check() directly.
+export async function safeCheck(
+  limiter: RateLimiter,
+  id: string,
+): Promise<{ result: RateLimitResult; error: boolean }> {
+  try {
+    return { result: await limiter.check(id), error: false };
+  } catch {
+    return { result: { allowed: true, remaining: RATE_LIMIT, resetMs: 0 }, error: true };
+  }
+}
+
+// A stable, non-reversible per-client id: HMAC-SHA256 of the client IP. The raw IP is never stored.
+// The IP comes ONLY from `x-real-ip`, which the hosting platform (Vercel) sets from the real
+// connection and overwrites any client-supplied value — so a client cannot forge a fresh bucket by
+// sending its own `x-forwarded-for` (whose leftmost value is client-controllable). Behind a
+// different proxy, configure it to set `x-real-ip` to the true client IP. No IP → one shared bucket.
 export function clientId(headers: Headers, env: Record<string, string | undefined> = process.env): string {
-  const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const ip = forwarded || headers.get("x-real-ip")?.trim() || "unknown";
+  const ip = headers.get("x-real-ip")?.trim() || "shared";
   const secret = env.RATE_LIMIT_SECRET?.trim() || "car-talk-dev-secret";
   return crypto.createHmac("sha256", secret).update(ip).digest("hex").slice(0, 32);
 }
