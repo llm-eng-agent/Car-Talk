@@ -1,22 +1,8 @@
-"""Retrieval evaluation runner and ablation (spec sections 18.3-18.4, Phase 4 DoD).
+"""Retrieval evaluation runner and ablation.
 
 Runs dense-only, BM25-only, and hybrid-RRF retrieval over the Hebrew golden set and reports
 Recall@5, Precision@5, vehicle-resolution accuracy, and balanced evidence coverage per mode,
 plus the hybrid-vs-dense acceptance verdict and real failure cases.
-
-Metric definitions (the spec fixes targets, not formulas). Relevance is the labelled gold
-(``relevant_chunk_ids``), never mere vehicle membership, so a metric never passes on
-wrong-aspect evidence:
-- Recall@5  = mean over gold-bearing queries of |gold ∩ top5| / |gold| (chunk-level).
-- Precision@5 = mean over the same queries of |gold ∩ top5| / k (chunk-level).
-- Hit-rate@5 = share of gold-bearing queries with ≥1 gold chunk in top5 (diagnostic: "can an
-  answer be grounded at all"; not a spec gate).
-- Vehicle resolution = fraction of queries whose expected vehicles all appear in top5
-  (vehicle-level — this metric asks only whether the right vehicle was found).
-- Balanced coverage = over multi-vehicle queries, fraction where every compared vehicle
-  contributes at least one of its own gold chunks to top5.
-Follow-up queries are contextualised by prepending prior user turns (stand-in for the
-Phase 8 query rewriter). Unanswerable queries have no gold and are reported separately.
 
 Usage:
     car-talk-eval                       # writes docs/eval_report.md
@@ -46,12 +32,12 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_DATASET = REPO_ROOT / "data" / "eval_queries.json"
 DEFAULT_OUTPUT = REPO_ROOT / "docs" / "eval_report.md"
 
-# Spec section 18.3 targets.
+
 TARGET_RECALL = 0.85
 TARGET_PRECISION = 0.70
 TARGET_RESOLUTION = 1.0
 TARGET_COVERAGE = 0.90
-DEGRADE_TOLERANCE = 0.02  # spec line 565
+DEGRADE_TOLERANCE = 0.02
 
 MODES = (RetrievalMode.DENSE, RetrievalMode.BM25, RetrievalMode.HYBRID)
 
@@ -109,11 +95,7 @@ def expected_all_present(expected_vehicles: set[str], retrieved: list[RetrievedC
 def balanced_coverage_hit(
     relevant_chunk_ids: dict[str, list[str]], retrieved: list[RetrievedChunk]
 ) -> bool:
-    """Whether every vehicle contributes at least one of its own gold chunks to the results.
-
-    Stricter than vehicle presence: a vehicle appearing only via unrelated chunks does not
-    count as covered (spec §18.3 balanced coverage = relevant evidence per compared vehicle).
-    """
+    """Whether every vehicle contributes at least one of its own gold chunks to the results."""
 
     retrieved_ids = {chunk.chunk_id for chunk in retrieved}
     return all(
@@ -266,7 +248,7 @@ def render_report(report: EvalReport) -> str:
         f"top-k = {report.top_k}. Metric definitions: see `evaluate.py` docstring."
     )
     lines.append("")
-    lines.append("## Ablation — metrics by retrieval mode (spec §18.4)")
+    lines.append("## Ablation — metrics by retrieval mode")
     lines.append("")
     lines.append(
         "| Mode | Recall@5 | Precision@5 | Hit-rate@5 | Vehicle resolution | Balanced coverage |"
@@ -286,7 +268,7 @@ def render_report(report: EvalReport) -> str:
     lines.append("")
 
     hybrid = report.mode_metrics[RetrievalMode.HYBRID]
-    lines.append("## Release gates (hybrid vs §18.3 targets)")
+    lines.append("## Release gates")
     lines.append("")
     lines.append("| Metric | Value | Target | Result |")
     lines.append("|---|---:|---:|:--|")
@@ -302,7 +284,7 @@ def render_report(report: EvalReport) -> str:
 
     accepted, reason = report.hybrid_accepted
     verdict = "KEEP hybrid" if accepted else "hybrid NOT justified"
-    lines.append("## Hybrid acceptance (spec line 565)")
+    lines.append("## Hybrid acceptance")
     lines.append("")
     lines.append(f"**{verdict}** — {reason}")
     lines.append("")
@@ -349,22 +331,22 @@ def render_report(report: EvalReport) -> str:
         "- **Strict chunk-level gold.** Sibling chunks from the *same section* as the gold "
         "(e.g. q13 returns `audi_rs3_review::b1::c2` next to gold `::b1::c1`) are relevant but "
         "score 0 — Recall@5 understates real quality. This is a labelling-sparsity artefact, "
-        "not a retrieval fault, and is not fixed by tuning RRF/top-k (spec forbids)."
+        "not a retrieval fault, and is not fixed by tuning RRF/top-k."
     )
     lines.append(
         "- **Comparison coverage.** A single top-5 pool lets one vehicle dominate (e.g. q18 "
         "fills all 5 slots with Kia), so the other compared vehicle can't contribute — this "
-        "caps balanced coverage. Fix: per-vehicle retrieval then merge (Phase 5 orchestrator)."
+        "caps balanced coverage. Fix: per-vehicle retrieval then merge."
     )
     lines.append(
         "- **Un-named recommendation queries.** Queries that describe a need without naming a "
         "vehicle (q22, q24) scatter across the corpus — they need a query→vehicle resolution "
-        "step (Phase 5), absent from this raw-retrieval baseline."
+        "step, absent from this raw-retrieval baseline."
     )
     lines.append("")
     lines.append(
         "These are baseline numbers for **raw retrieval only**; the §18.3 gates are evaluated "
-        "against the full retrieval orchestrator (Phase 5), which adds vehicle resolution and "
+        "against the full retrieval orchestrator, which adds vehicle resolution and "
         "per-vehicle evidence gathering. Hybrid beats dense-only (the spec's acceptance "
         "reference), but note above that BM25-only is the strongest single mode here."
     )
