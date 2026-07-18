@@ -1,21 +1,4 @@
 """Deterministic extraction of Auto.co.il review articles into canonical documents.
-
-This adapter owns the exact CSS selectors for the Auto.co.il article template. Selector
-spelling is an implementation detail; the extraction acceptance rules enforced here (and
-the tests in ``tests/test_auto_co_il_adapter.py``) are the binding contract
-(spec: Locked Contract / source ingestion).
-
-The adapter is pure and network-free: it turns an HTML string into a
-``CanonicalDocument``. No LLM is used (spec section 6.5). Vehicle identity comes from the
-curated ``SourceEntry`` manifest, never from article prose.
-
-Extraction strategy (validated against the live MG S6 page):
-- Article prose lives inside ``div.article-rte-section`` blocks. Everything else on the
-  page (navigation, image galleries, comparison tables, comments, the existing AI/FAQ
-  summary, ads, related cards) sits in other containers and is therefore excluded simply
-  by scoping extraction to those blocks.
-- Within the prose, ``<h2>`` starts a section and ``<p>`` adds a paragraph, walked in
-  document order. Text before the first ``<h2>`` becomes the introduction section.
 """
 
 from __future__ import annotations
@@ -46,7 +29,6 @@ PARAGRAPH_XPATH = ".//p"
 MIN_CONTENT_CHARS = 1000
 
 # Internal heading for lead text appearing before the first article heading
-# (spec section 6.3).
 INTRODUCTION_HEADING = "introduction"
 
 # Publication date sources, in priority order: structured JSON-LD (precise, includes a
@@ -71,13 +53,13 @@ _WHITESPACE_RE = re.compile(r"\s+")
 class ExtractionError(Exception):
     """Raised when an article fails the extraction acceptance rules.
 
-    Failing early (rather than emitting a partial document) keeps a broken source
-    visible instead of silently indexing degraded content (spec section 5.3).
+    Failing early keeps a broken source
+    visible instead of silently indexing degraded content .
     """
 
 
 def _normalize_text(raw_text: str) -> str:
-    """Collapse all whitespace (including non-breaking spaces) into single spaces."""
+    """Collapse all whitespace into single spaces."""
 
     return _WHITESPACE_RE.sub(" ", raw_text.replace("\xa0", " ")).strip()
 
