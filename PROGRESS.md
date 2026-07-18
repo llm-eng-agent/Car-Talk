@@ -8,7 +8,7 @@ that step. One PR per task; only the owner merges.
 
 Legend: ✅ done · 🔄 in progress · ⬜ not started · ⛔ blocked
 
-_Last updated: 2026-07-18 (Phase 6b: live structured generation + answer pipeline)_
+_Last updated: 2026-07-18 (Phase 7: deterministic recommendation engine)_
 
 ## Status by phase
 
@@ -23,7 +23,7 @@ _Last updated: 2026-07-18 (Phase 6b: live structured generation + answer pipelin
 | Phase 4 — Evaluation dataset (30 Hebrew queries) | ✅ | Dataset + eval runner + ablation report; gates are a Phase-5 baseline |
 | Phase 5 — Retrieval orchestrator | ✅ | 5a: resolver (100%); 5b: live routes + balanced evidence + low-evidence gate |
 | Phase 6 — Context + generation | ✅ | 6a: context/citations/schema/validation; 6b: live gpt-5.6-terra call + answer() pipeline (verified live) |
-| Phase 7 — Recommendation engine | ⬜ | |
+| Phase 7 — Recommendation engine | ✅ | Deterministic: constraints → lexicographic → Pareto → trade-off; wired into answer() |
 | Phase 8 — Session memory | ⬜ | |
 | Phase 9 — User interface (Next.js) | ⬜ | |
 | Phase 10 — Security + reliability | ⬜ | |
@@ -238,6 +238,26 @@ The one grounded generation call and the end-to-end pipeline (spec §14, §22, �
 - **Tests:** 8 offline (retry paths + pipeline short-circuits, fake model/retriever) + a live
   generation smoke (single/comparison/out_of_scope) — **72 total pass**; `typecheck`/`build` clean.
 
+## ✅ Phase 7 — deterministic recommendation engine
+
+The application-side final decision (spec §17) — the LLM assesses evidence, the code picks (§17.8).
+
+- **`constraints.ts`** — deterministic hard-constraint parser (§11.3): `minimum_seats`,
+  `allowed_powertrains` (electric/hybrid/gasoline/diesel), `transmission` (automatic/manual).
+  Explicit-only, never inferred (§250); budget excluded (§247).
+- **`recommend.ts`** — the decision policy: eliminate on `not_satisfied` constraints (missing
+  evidence never eliminates, but blocks a confident pick); **lexicographic** on the user's stated
+  aspect order; else **Pareto** sole-winner; else an explicit **trade-off** + the model's follow-up.
+  No numerical scores, no chunk-counting.
+- **Wiring**: `context.ts` renders a `HARD CONSTRAINTS` section so the model emits
+  `constraint_assessments`; `answer.ts` parses constraints, passes them through, and attaches a
+  `recommendation` to multi-vehicle answers.
+- **Prompt tightening** (found via live smoke): a 3-vehicle recommendation overflowed the 1200-token
+  cap → the system prompt now caps assessments at 3 aspects (§203) and requires concise explanations
+  (§23.3), keeping output within budget.
+- **Tests:** 21 offline (parser + the full §18.7 recommendation matrix + context + pipeline) + a
+  live constrained-recommendation smoke. **90 total pass**; `typecheck`/`build` clean.
+
 ## Open flags / dependencies
 
 - ✅ **OpenAI key** available (in git-ignored `.env`).
@@ -261,4 +281,5 @@ The one grounded generation call and the end-to-end pipeline (spec §14, §22, �
 | #9 | Phase 5a — web bootstrap + deterministic vehicle resolver | Merged |
 | #10 | Phase 5b — live retrieval orchestrator (routes + balanced evidence) | Merged |
 | #11 | Phase 6a — context builder + citation map + generation schema | Merged |
-| #12 | Phase 6b — live structured generation + answer pipeline | Open |
+| #12 | Phase 6b — live structured generation + answer pipeline | Merged |
+| #13 | Phase 7 — deterministic recommendation engine | Open |

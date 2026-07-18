@@ -6,6 +6,7 @@
 import { loadVehicleCatalog } from "../retrieval/catalog";
 import { type EvidencePackage } from "../retrieval/types";
 import { buildCitations, type Citation, type CitationMap } from "./citations";
+import { type ParsedConstraints } from "./constraints";
 
 // Per-vehicle chunk budget that keeps evidence balanced while never exceeding the §23.2 total
 // context ceiling of 9: single 5; two → 6; three → 9; four → 8 (2 each, still ≤ 9).
@@ -30,6 +31,7 @@ export function buildContext(
   userQuery: string,
   pkg: EvidencePackage,
   session?: SessionContext,
+  constraints?: ParsedConstraints,
 ): BuiltContext {
   const capped = capEvidence(pkg);
   const { citations, map } = buildCitations(capped);
@@ -37,6 +39,7 @@ export function buildContext(
 
   const sections = [
     section("USER REQUEST", userQuery.trim()),
+    section("HARD CONSTRAINTS", renderConstraints(constraints)),
     section("SESSION PREFERENCES", (session?.preferences ?? []).join("\n") || "None"),
     section(
       "ACTIVE VEHICLES",
@@ -45,6 +48,16 @@ export function buildContext(
     section("UNTRUSTED REVIEW EVIDENCE", renderEvidence(capped, citations, names)),
   ];
   return { contextText: sections.join("\n\n"), citations, citationMap: map };
+}
+
+// The explicitly-stated hard constraints the model must assess each vehicle against, or "None".
+function renderConstraints(constraints?: ParsedConstraints): string {
+  if (!constraints) return "None";
+  const lines: string[] = [];
+  if (constraints.minimumSeats !== undefined) lines.push(`minimum_seats: ${constraints.minimumSeats}`);
+  if (constraints.allowedPowertrains?.length) lines.push(`allowed_powertrains: ${constraints.allowedPowertrains.join(", ")}`);
+  if (constraints.transmission) lines.push(`transmission: ${constraints.transmission}`);
+  return lines.length > 0 ? lines.join("\n") : "None";
 }
 
 // Trim each vehicle's chunk list to the per-route budget before citation IDs are assigned, so IDs
