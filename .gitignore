@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Car-Talk project ---
+# Ingestion artifacts: raw HTML and full processed documents are debug/build outputs,
+# never committed (spec 5.7, 27B). Only synthetic fixtures live in the repo.
+.tmp/
+pipeline/.tmp/
+
+# Node / Next.js (added in a later phase)
+node_modules/
+.next/

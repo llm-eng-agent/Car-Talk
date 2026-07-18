@@ -1,0 +1,100 @@
+{
+  "sources": [
+    {
+      "document_id": "citroen_c3_review",
+      "vehicle_id": "citroen_c3",
+      "canonical_name": "Citroen C3",
+      "make": "Citroen",
+      "model": "C3",
+      "model_year": 2026,
+      "article_type": "road_test",
+      "coverage_scope": "full_review",
+      "url": "https://www.auto.co.il/articles/test-drives/road-tests/citroen-c3-2026/",
+      "enabled": true
+    },
+    {
+      "document_id": "audi_rs3_review",
+      "vehicle_id": "audi_rs3",
+      "canonical_name": "Audi RS3",
+      "make": "Audi",
+      "model": "RS3",
+      "model_year": null,
+      "article_type": "road_test",
+      "coverage_scope": "full_review",
+      "url": "https://www.auto.co.il/articles/test-drives/road-tests/audi-rs3-fl/",
+      "enabled": true
+    },
+    {
+      "document_id": "kia_ev9_long_term_report",
+      "vehicle_id": "kia_ev9",
+      "canonical_name": "Kia EV9",
+      "make": "Kia",
+      "model": "EV9",
+      "model_year": null,
+      "article_type": "long_term_report",
+      "coverage_scope": "partial_update",
+      "url": "https://www.auto.co.il/articles/test-drives/road-tests/long-term-report-kia-ev9-4/",
+      "enabled": true
+    },
+    {
+      "document_id": "mg_s6_review",
+      "vehicle_id": "mg_s6",
+      "canonical_name": "MG S6",
+      "make": "MG",
+      "model": "S6",
+      "model_year": null,
+      "article_type": "road_test",
+      "coverage_scope": "full_review",
+      "url": "https://www.auto.co.il/articles/test-drives/road-tests/mg-s6/",
+      "enabled": true
+    },
+    {
+      "document_id": "hyundai_elantra_n_review",
+      "vehicle_id": "hyundai_elantra_n_manual",
+      "canonical_name": "Hyundai Elantra N",
+      "make": "Hyundai",
+      "model": "Elantra N",
+      "model_year": null,
+      "article_type": "road_test",
+      "coverage_scope": "full_review",
+      "url": "https://www.auto.co.il/articles/test-drives/road-tests/hyundai-elantra-n-manual/",
+      "enabled": true
+    },
+    {
+      "document_id": "aion_ht_review",
+      "vehicle_id": "aion_ht",
+      "canonical_name": "Aion HT",
+      "make": "Aion",
+      "model": "HT",
+      "model_year": null,
+      "article_type": "road_test",
+      "coverage_scope": "full_review",
+      "url": "https://www.auto.co.il/articles/test-drives/road-tests/aion-ht/",
+      "enabled": true
+    },
+    {
+      "document_id": "lynk_co_01_review",
+      "vehicle_id": "lynk_co_01",
+      "canonical_name": "Lynk & Co 01",
+      "make": "Lynk & Co",
+      "model": "01",
+      "model_year": 2026,
+      "article_type": "road_test",
+      "coverage_scope": "full_review",
+      "url": "https://www.auto.co.il/articles/test-drives/road-tests/link-and-co-01-2026/",
+      "enabled": true
+    },
+    {
+      "document_id": "genesis_gv80_review",
+      "vehicle_id": "genesis_gv80",
+      "canonical_name": "Genesis GV80",
+      "make": "Genesis",
+      "model": "GV80",
+      "model_year": 2026,
+      "article_type": "road_test",
+      "coverage_scope": "full_review",
+      "url": "https://www.auto.co.il/articles/test-drives/road-tests/genesis-gv80-2026/",
+      "enabled": true
+    }
+  ]
+}

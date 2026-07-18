@@ -1,0 +1,50 @@
+[project]
+name = "car-talk-pipeline"
+version = "0.1.0"
+description = "Offline ingestion pipeline for the Car-Talk automotive review chatbot POC"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "scrapy>=2.11",
+    "parsel>=1.9",
+    "pydantic>=2.7",
+]
+
+[project.scripts]
+car-talk-scrape = "car_talk_pipeline.scraping.run:main"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pytest>=8.3",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/car_talk_pipeline"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# Correctness, readability, security-leaning defaults (see code_guidelines.md).
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "PTH", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src", "tests"]
+# Scrapy ships without complete type stubs; ignore its missing imports only.
+[[tool.mypy.overrides]]
+module = ["scrapy.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
