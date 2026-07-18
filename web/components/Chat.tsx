@@ -228,7 +228,19 @@ function Welcome({ onPick }: { onPick: (text: string) => void }) {
   );
 }
 
+// Rotating "thinking" copy — cycles through the pool every couple of seconds so the wait feels alive.
+const THINKING_MESSAGES = [
+  "אוסף את הפרטים החשובים ומכין תשובה",
+  "רגע, בודק מה אומרים",
+  "קורא בין השורות של הביקורות",
+];
+
 function Thinking() {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setIndex((i) => (i + 1) % THINKING_MESSAGES.length), 2200);
+    return () => clearInterval(id);
+  }, []);
   return (
     <div
       className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70"
@@ -236,7 +248,7 @@ function Thinking() {
     >
       <span className="inline-flex items-center gap-2">
         <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
-        אוחז ראיות ומנסח תשובה מצוטטת…
+        {THINKING_MESSAGES[index]}…
       </span>
     </div>
   );
