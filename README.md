@@ -6,13 +6,13 @@ It helps users understand, compare, and choose cars, answering exclusively from 
 
 ## Features
 
-- **Single-vehicle Q&A** — ask about one reviewed car and get an evidence-backed summary.
-- **Model comparison** — compare two reviewed cars across aspects (e.g. EV9 vs. GV80).
-- **Discovery & recommendations** — describe a need (family, budget, electric) and get a
+- **Single-vehicle Q&A** : ask about one reviewed car and get an evidence-backed summary.
+- **Model comparison** : compare two reviewed cars across aspects (e.g. EV9 vs. GV80).
+- **Discovery & recommendations** : describe a need (family, budget, electric) and get a
   deterministic recommendation with the trade-offs spelled out.
-- **Inline citations** — every claim links to the exact source excerpt it came from.
-- **Session memory** — the bot carries context across turns in a conversation.
-- **Honest abstention** — out-of-corpus or low-evidence questions get a clear "not in my
+- **Inline citations** : every claim links to the exact source excerpt it came from.
+- **Session memory** : the bot carries context across turns in a conversation.
+- **Honest abstention** : out-of-corpus or low-evidence questions get a clear "not in my
   review corpus" reply instead of a made-up answer.
 
 
@@ -41,11 +41,11 @@ statuses (out-of-scope, insufficient evidence) never spend a generation call.
 
 ## Tech stack
 
-- **Web** — Next.js 15, React 19, Tailwind CSS 4 (deployed on Vercel).
-- **LLM** — OpenAI for embeddings and structured generation.
-- **Vector search** — Qdrant (hybrid indexing).
-- **Rate limiting** — Upstash Redis.
-- **Pipeline** —  scrape → process → chunk → embed → index → evaluate.
+- **Web** : Next.js 15, React 19, Tailwind CSS 4 (deployed on Vercel).
+- **LLM** : OpenAI for embeddings and structured generation.
+- **Vector search** : Qdrant (hybrid indexing).
+- **Rate limiting** : Upstash Redis.
+- **Pipeline** :  scrape → process → chunk → embed → index → evaluate.
 
 ## Repository layout
 
