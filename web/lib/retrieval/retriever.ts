@@ -98,5 +98,7 @@ function toChunk(payload: Record<string, unknown> | null | undefined, score: num
     sectionHeading: field("section_heading"),
     contentType: field("content_type"),
     content: field("content"),
+    articleTitle: field("article_title"),
+    sourceUrl: field("source_url"),
   };
 }

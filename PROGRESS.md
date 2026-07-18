@@ -8,7 +8,7 @@ that step. One PR per task; only the owner merges.
 
 Legend: ✅ done · 🔄 in progress · ⬜ not started · ⛔ blocked
 
-_Last updated: 2026-07-18 (Phase 5b: live retrieval orchestrator)_
+_Last updated: 2026-07-18 (Phase 6a: context builder + generation schema)_
 
 ## Status by phase
 
@@ -22,7 +22,7 @@ _Last updated: 2026-07-18 (Phase 5b: live retrieval orchestrator)_
 | Phase 3b — Qdrant indexing | ✅ | 162 points in `car_review_chunks_v1` (dense + BM25) |
 | Phase 4 — Evaluation dataset (30 Hebrew queries) | ✅ | Dataset + eval runner + ablation report; gates are a Phase-5 baseline |
 | Phase 5 — Retrieval orchestrator | ✅ | 5a: resolver (100%); 5b: live routes + balanced evidence + low-evidence gate |
-| Phase 6 — Context + generation | ⬜ | |
+| Phase 6 — Context + generation | 🔄 | 6a: context builder + citation map + schema + validation (offline); 6b (live call) gated on model id |
 | Phase 7 — Recommendation engine | ⬜ | |
 | Phase 8 — Session memory | ⬜ | |
 | Phase 9 — User interface (Next.js) | ⬜ | |
@@ -201,6 +201,25 @@ Phase-4b single-pool top-5 with **per-vehicle balanced retrieval**, the fix for 
   balanced `audi_rs3`+`kia_ev9`, discovery→candidates. `build`/`typecheck` clean.
 - Output is an `EvidencePackage` — the input contract for the Phase 6 context builder.
 
+## 🔄 Phase 6a — context builder + citation map + generation schema + validation
+
+The deterministic, offline half of Phase 6 (spec §13–15, §22) — everything around the model call,
+no LLM yet. Mirrors the 5a/5b split; the live call (6b) is gated on the model-id blocker.
+
+- **New `web/lib/generation/`**: `schema.ts` (strict structured-output JSON Schema + TS types +
+  the status/mode/aspect/constraint enums; no `recommended_vehicle_id` — the model never picks
+  the final vehicle), `citations.ts` (deterministic `C1..Cn` map → chunk_id/title/section/url/
+  700-char excerpt; model emits IDs only, never URLs), `context.ts` (token-bounded grouped input
+  per §13.2/§13.3 — budget caps 5/6/9, evidence grouped by vehicle+section, labelled UNTRUSTED),
+  `validate.ts` (every citation exists; material blocks need a citation; aspects/vehicles/
+  constraints in-enum; `evidence_text` an exact substring of the user message; no winner under
+  insufficient/out-of-scope), `respond.ts` (out_of_scope / low-evidence short-circuit to a
+  terminal status **without** calling the model — spec §22.2).
+- **RetrievedChunk** extended with `articleTitle` + `sourceUrl` (already in the Qdrant payload).
+- **19 offline tests** across the five modules; `test`/`typecheck`/`build` clean.
+- Final abstention/out_of_scope **wording** is a provisional placeholder — deferred per owner
+  until after the context stage.
+
 ## Open flags / dependencies
 
 - ✅ **OpenAI key** available (in git-ignored `.env`).
@@ -223,4 +242,5 @@ Phase-4b single-pool top-5 with **per-vehicle balanced retrieval**, the fix for 
 | #7 | Phase 4 — Hebrew golden eval dataset | Merged |
 | #8 | Phase 4b / Spike B — retrieval eval runner + ablation | Merged |
 | #9 | Phase 5a — web bootstrap + deterministic vehicle resolver | Merged |
-| #10 | Phase 5b — live retrieval orchestrator (routes + balanced evidence) | Open |
+| #10 | Phase 5b — live retrieval orchestrator (routes + balanced evidence) | Merged |
+| #11 | Phase 6a — context builder + citation map + generation schema | Open |
