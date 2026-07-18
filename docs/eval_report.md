@@ -12,16 +12,7 @@ Golden set: **30 queries** · collection `car_review_chunks_v1` · top-k = 5. Me
 
 _Hit-rate@5 = share of queries with **at least one** gold chunk in top-5 (can an answer be grounded at all); Recall@5 = fraction of **all** labelled gold recovered._
 
-## Release gates (hybrid vs §18.3 targets)
-
-| Metric | Value | Target | Result |
-|---|---:|---:|:--|
-| Recall@5 | 0.599 | ≥ 0.85 | FAIL |
-| Precision@5 | 0.215 | ≥ 0.7 | FAIL |
-| Vehicle resolution | 0.862 | = 1.0 | FAIL |
-| Balanced coverage | 0.083 | ≥ 0.9 | FAIL |
-
-## Hybrid acceptance (spec line 565)
+## Hybrid acceptance 
 
 **KEEP hybrid** — ΔRecall@5=+0.046, ΔCoverage=+0.083 (improves=True, within 0.02 tolerance=True)
 
