@@ -12,8 +12,8 @@ and each PR gets a preview URL. No tokens are shared.
 1. **Sign in** at [vercel.com](https://vercel.com) (GitHub sign-in is easiest).
 2. **Add New… → Project** → **Import** the `Car-Talk` GitHub repo (authorize Vercel for the repo).
 3. **Root Directory → `web`** — this is required; the app lives in the subdirectory, not the repo
-   root. Framework is auto-detected as **Next.js**; install/build use pnpm automatically
-   (`pnpm-lock.yaml` + `packageManager` are committed).
+   root. Framework is auto-detected as **Next.js**; install/build use pnpm (from the committed
+   `pnpm-lock.yaml`).
 4. **Environment Variables** (scope: Production **and** Preview) — server-side only, **never** with a
    `NEXT_PUBLIC_` prefix (spec §20.5):
 
@@ -23,6 +23,7 @@ and each PR gets a preview URL. No tokens are shared.
    | `QDRANT_URL` | ✅ | Qdrant Cloud cluster URL |
    | `QDRANT_API_KEY` | ✅ | Qdrant Cloud API key |
    | `QDRANT_COLLECTION` | ✅ | `car_review_chunks_v1` |
+   | `ENABLE_EXPERIMENTAL_COREPACK` | ✅ | `1` — makes the `packageManager` pin effective (see below) |
    | `UPSTASH_REDIS_REST_URL` | ⭕ recommended | Upstash Redis REST URL |
    | `UPSTASH_REDIS_REST_TOKEN` | ⭕ recommended | Upstash Redis REST token |
    | `RATE_LIMIT_SECRET` | ⭕ recommended | random string (HMAC key for IP hashing) |
@@ -40,6 +41,11 @@ and each PR gets a preview URL. No tokens are shared.
 - **No scraping/indexing at deploy** — Vercel only builds the Next.js app. Re-indexing is a manual
   offline job (`pipeline/`), run separately against Qdrant Cloud.
 - **Node** is pinned to 22.x via `engines` (spec §27A).
+- **pnpm version:** `web/package.json` pins `packageManager: pnpm@10.32.1`, but Vercel only honors that
+  field **when Corepack is enabled**. Otherwise it infers the pnpm major from the lockfile version
+  (`pnpm-lock.yaml` is v9 → pnpm 9 or 10). Set **`ENABLE_EXPERIMENTAL_COREPACK=1`** (above) so the pin
+  is enforced and the build matches the verified local environment. See
+  [Vercel package managers](https://vercel.com/docs/package-managers).
 
 ## Verify after deploy (DoD §Phase 11)
 
