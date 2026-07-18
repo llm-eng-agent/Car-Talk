@@ -8,7 +8,7 @@ that step. One PR per task; only the owner merges.
 
 Legend: ✅ done · 🔄 in progress · ⬜ not started · ⛔ blocked
 
-_Last updated: 2026-07-18 (Phase 5a: web bootstrap + vehicle resolver)_
+_Last updated: 2026-07-18 (Phase 5b: live retrieval orchestrator)_
 
 ## Status by phase
 
@@ -21,7 +21,7 @@ _Last updated: 2026-07-18 (Phase 5a: web bootstrap + vehicle resolver)_
 | Phase 3a — Chunking + embeddings | ✅ | 162 chunks embedded (1536-d); cache works |
 | Phase 3b — Qdrant indexing | ✅ | 162 points in `car_review_chunks_v1` (dense + BM25) |
 | Phase 4 — Evaluation dataset (30 Hebrew queries) | ✅ | Dataset + eval runner + ablation report; gates are a Phase-5 baseline |
-| Phase 5 — Retrieval orchestrator | 🔄 | 5a: web bootstrap + vehicle resolver (100% on golden set); retrieval routes next |
+| Phase 5 — Retrieval orchestrator | ✅ | 5a: resolver (100%); 5b: live routes + balanced evidence + low-evidence gate |
 | Phase 6 — Context + generation | ⬜ | |
 | Phase 7 — Recommendation engine | ⬜ | |
 | Phase 8 — Session memory | ⬜ | |
@@ -152,7 +152,7 @@ lets one vehicle dominate comparisons, and un-named recommendation queries need 
 resolution. All three are **Phase 5 orchestrator** work; per spec the gates are re-evaluated
 there. RRF/top-k were **not** tuned to force a pass (spec line 567).
 
-## 🔄 Phase 5a — web bootstrap + deterministic vehicle resolver
+## ✅ Phase 5a — web bootstrap + deterministic vehicle resolver
 
 Per spec (§20.1) the retrieval orchestrator is **TypeScript in the Next.js app**, not Python.
 Phase 5 is split: 5a bootstraps `web/` and delivers the deterministic resolver + shared
@@ -172,6 +172,28 @@ balanced retrieval) — which is what actually lifts the coverage gate.
   **name** a vehicle, the resolver returns exactly `expected_vehicle_ids` → **vehicle resolution
   = 100%** (Phase 5 DoD); un-named recommendations + the out-of-corpus query resolve to no
   vehicle (→ discovery/abstain downstream).
+
+## ✅ Phase 5b — live retrieval orchestrator (TypeScript)
+
+The live half of the Phase 5 orchestrator, in the Next.js app (spec §20.1/§11.4). Replaces the
+Phase-4b single-pool top-5 with **per-vehicle balanced retrieval**, the fix for the coverage gate.
+
+- **SDKs added to `web/`**: `@qdrant/js-client-rest`, `openai` (server-side only; keys never
+  reach the client). Config/clients: `config.ts` (env + `car_review_chunks_v1` default),
+  `embedding.ts` (`OpenAIEmbeddingProvider`, 1536-d, dim-validated), `qdrantClient.ts`.
+- **`retriever.ts`** — TS port of the Python `HybridRetriever`: dense (client-side OpenAI) +
+  BM25 (server-side `qdrant/bm25`) prefetch, RRF fusion, optional `vehicle_id` filter. Client +
+  embedder injectable → offline tests. **`factory.ts`** is the composition root (reused by the
+  Phase 6 route).
+- **`orchestrator.ts`** — routes by resolved-vehicle count (§11.4): 1 → top 5 filtered;
+  2–4 → parallel per-vehicle top 3 (balanced); 0 → discovery (global hybrid → top-3 candidates
+  by group → balanced top-3 each). **Follow-up** falls back to `activeVehicleIds` (Phase 8
+  supplies these). **Low-evidence gate**: single/discovery with 0 chunks, or a comparison with
+  <2 evidenced sides → `sufficient:false` → caller abstains, generation never runs.
+- **Tests**: 11 offline (fake client/embedder) + a live smoke check (skipped without secrets)
+  that verified all three routes against the real collection — single→`mg_s6`, comparison→
+  balanced `audi_rs3`+`kia_ev9`, discovery→candidates. `build`/`typecheck` clean.
+- Output is an `EvidencePackage` — the input contract for the Phase 6 context builder.
 
 ## Open flags / dependencies
 
@@ -194,4 +216,5 @@ balanced retrieval) — which is what actually lifts the coverage gate.
 | #6 | Phase 3b — Qdrant hybrid indexing | Merged |
 | #7 | Phase 4 — Hebrew golden eval dataset | Merged |
 | #8 | Phase 4b / Spike B — retrieval eval runner + ablation | Merged |
-| #9 | Phase 5a — web bootstrap + deterministic vehicle resolver | Open |
+| #9 | Phase 5a — web bootstrap + deterministic vehicle resolver | Merged |
+| #10 | Phase 5b — live retrieval orchestrator (routes + balanced evidence) | Open |
