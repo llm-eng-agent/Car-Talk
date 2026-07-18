@@ -223,6 +223,9 @@ __marimo__/
 .tmp/
 pipeline/.tmp/
 
-# Node / Next.js (added in a later phase)
+# Node / Next.js
 node_modules/
 .next/
+# The Python `lib/` rule above is unanchored and would hide the web app's source dir.
+!web/lib/
+!web/lib/**

@@ -1,0 +1,15 @@
+{
+  "aspects": {
+    "ride_comfort": ["נוחות", "נוחות נסיעה", "רכות", "בולמים", "comfort", "ride"],
+    "space_practicality": ["מרחב", "שטח", "תא מטען", "מקום", "פרקטי", "פרקטיות", "משפחה", "space", "practicality", "boot", "trunk"],
+    "performance": ["ביצועים", "תאוצה", "כוח", "מהירות", "כוחות", "סוסים", "performance", "acceleration", "power"],
+    "handling": ["כביש", "אחיזה", "התנהגות", "הגה", "כניסה לפניות", "handling", "cornering"],
+    "interior_quality": ["פנים", "איכות פנים", "גימור", "חומרים", "תא הנוסעים", "interior", "cabin", "quality"],
+    "usability_ergonomics": ["שימושיות", "ארגונומיה", "מסך", "ממשק", "תפעול", "usability", "ergonomics", "screen", "interface"],
+    "efficiency_range": ["טווח", "צריכה", "טעינה", "קילומטראז'", "סוללה", "range", "efficiency", "charging", "battery", "consumption"],
+    "refinement": ["שקט", "בידוד רעש", "רעשים", "עידון", "refinement", "noise", "quiet"],
+    "value_for_money": ["מחיר", "תמורה", "תמורה למחיר", "עלות", "זול", "יקר", "value", "price", "cost", "worth"],
+    "safety_equipment": ["בטיחות", "מערכות בטיחות", "כריות אוויר", "NCAP", "safety", "airbags"],
+    "design": ["עיצוב", "מראה", "נראות", "design", "styling", "looks"]
+  }
+}
