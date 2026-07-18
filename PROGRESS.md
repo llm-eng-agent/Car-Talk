@@ -8,19 +8,19 @@ that step. One PR per task; only the owner merges.
 
 Legend: ✅ done · 🔄 in progress · ⬜ not started · ⛔ blocked
 
-_Last updated: 2026-07-18 (Phase 4: golden eval dataset)_
+_Last updated: 2026-07-18 (Phase 4b: retrieval eval runner)_
 
 ## Status by phase
 
 | Phase | Status | Notes |
 |---|---|---|
 | Spike A — Scraping | ✅ | Merged in PR #1 |
-| Spike B — Hybrid retrieval | ⬜ | Collection now live; query side is next |
+| Spike B — Hybrid retrieval | ✅ | Ablation run; hybrid kept (best resolution + coverage) |
 | Spike C — Structured generation | ⬜ | Verify gpt-5.6-terra id first (OpenAI ready) |
 | Phase 2 — Full ingestion (8 articles) | ✅ | All 8 extracted + validated; idempotent |
 | Phase 3a — Chunking + embeddings | ✅ | 162 chunks embedded (1536-d); cache works |
 | Phase 3b — Qdrant indexing | ✅ | 162 points in `car_review_chunks_v1` (dense + BM25) |
-| Phase 4 — Evaluation dataset (30 Hebrew queries) | 🔄 | Golden dataset done; eval runner + metrics next |
+| Phase 4 — Evaluation dataset (30 Hebrew queries) | ✅ | Dataset + eval runner + ablation report; gates are a Phase-5 baseline |
 | Phase 5 — Retrieval orchestrator | ⬜ | |
 | Phase 6 — Context + generation | ⬜ | |
 | Phase 7 — Recommendation engine | ⬜ | |
@@ -120,6 +120,30 @@ measuring retrieval quality. **This step is the dataset only**; the eval runner 
   chunk-id shape, abstain/context invariants — plus a local-only check (skipped in CI) that
   every gold `chunk_id` exists on disk. All ~55 gold ids verified against `.tmp/chunks`.
 
+## ✅ Phase 4b / Spike B — retrieval eval runner + ablation
+
+Query-side retrieval + the evaluation that closes Phase 4's DoD (§18.3/§18.4):
+
+- New `retrieval.py`: `HybridRetriever` (dense / BM25 / hybrid-RRF, optional `vehicle_id`
+  filter), reusable by the Phase 5 orchestrator. Dense query vectors embedded client-side
+  (OpenAI); BM25 server-side. Client + provider injectable → offline tests.
+- New `evaluate.py` + `car-talk-eval` CLI: runs all 3 modes over the golden set, computes
+  Recall@5 / Precision@5 (vehicle-level) / vehicle-resolution / balanced-coverage, applies
+  the hybrid-acceptance rule, and writes `docs/eval_report.md` with the ablation table,
+  gate pass/fail, failure cases, and interpretation.
+- 12 offline tests (metric helpers + scripted-retriever runner + fake-client query builders).
+
+**Ablation result (live, top-5):** hybrid R@5 0.60 · P@5 0.84 · resolution 0.86 · coverage
+0.67. Hybrid **kept** — best vehicle resolution and coverage; ΔRecall +0.05, ΔCoverage +0.42
+over dense-only. Spike B checks pass: exact term "178,888"→MG (BM25), vehicle filter works.
+
+**Finding (not a bug):** Recall@5 / resolution / coverage are **below the §18.3 gates** for
+*raw retrieval*. Causes (in `docs/eval_report.md`): strict chunk-level gold (relevant
+*sibling* chunks in the same section score 0), single-pool top-5 lets one vehicle dominate
+comparisons, and un-named recommendation queries need query→vehicle resolution. All three are
+**Phase 5 orchestrator** work; per spec the gates are re-evaluated there. RRF/top-k were **not**
+tuned to force a pass (spec line 567).
+
 ## Open flags / dependencies
 
 - ✅ **OpenAI key** available (in git-ignored `.env`).
@@ -139,4 +163,5 @@ measuring retrieval quality. **This step is the dataset only**; the eval runner 
 | #3 | Phase 2 — full ingestion of 8 articles | Merged |
 | #4 | Phase 3a — chunking + embeddings (+ module consolidation 19→8) | Merged |
 | #6 | Phase 3b — Qdrant hybrid indexing | Merged |
-| #7 | Phase 4 — Hebrew golden eval dataset | Open |
+| #7 | Phase 4 — Hebrew golden eval dataset | Merged |
+| #8 | Phase 4b / Spike B — retrieval eval runner + ablation | Open |
