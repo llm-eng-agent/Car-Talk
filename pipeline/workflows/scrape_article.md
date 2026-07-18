@@ -15,8 +15,8 @@ of ordered paragraphs, excluding all non-article content.
 
 ## Tools
 
-- `car-talk-scrape` CLI (`src/car_talk_pipeline/scraping/run.py`)
-- `AutoCoIlAdapter` (`auto_co_il_adapter.py`) — owns the CSS selectors.
+- `car-talk-scrape` CLI (`src/car_talk_pipeline/ingest.py`)
+- extraction in `src/car_talk_pipeline/adapter.py` — owns the CSS selectors.
 
 ## Steps
 
@@ -35,7 +35,7 @@ of ordered paragraphs, excluding all non-article content.
 ## Expected output
 
 A canonical document that satisfies the extraction acceptance rules (the binding
-contract, enforced by `tests/test_auto_co_il_adapter.py`):
+contract, enforced by `tests/test_adapter.py`):
 
 - non-empty article title
 - at least one content section
@@ -46,7 +46,7 @@ contract, enforced by `tests/test_auto_co_il_adapter.py`):
 ## Edge cases
 
 - **Extraction fails acceptance** → the adapter raises `ExtractionError`; a `failed` run
-  record is written. Fix the selectors in `AutoCoIlAdapter` — do **not** introduce a
+  record is written. Fix the selectors in `adapter.py` — do **not** introduce a
   browser to mask incorrect extraction (spec 5.3).
 - **Non-200 / network error** → an error run record is written via the spider errback.
 - **robots.txt disallows** → revisit politeness settings in `AutoCoIlSpider.custom_settings`

@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 
 import pytest
 
-from car_talk_pipeline.scraping.models import ArticleType, CoverageScope, SourceEntry
-from car_talk_pipeline.scraping.processing import classify_status, process_article
+from car_talk_pipeline.ingest import AutoCoIlSpider, classify_status, process_article
+from car_talk_pipeline.models import ArticleType, CoverageScope, SourceEntry
 
 FIXTURE = Path(__file__).parent / "fixtures" / "synthetic_article.html"
 TIMESTAMP = "2026-07-18T00:00:00+00:00"
@@ -77,3 +78,11 @@ def test_process_article_is_deterministic_and_detects_unchanged(html_bytes: byte
     )
     assert first.normalized_content_sha256 == second.normalized_content_sha256
     assert second.status == "unchanged"
+
+
+def test_spider_defines_async_start() -> None:
+    # Scrapy 2.13+ invokes ``async def start``; a revert to ``start_requests`` would fetch
+    # nothing and is not caught elsewhere in CI.
+    assert inspect.isasyncgenfunction(AutoCoIlSpider.start), (
+        "AutoCoIlSpider.start must be an async generator (Scrapy 2.13+ entry point)"
+    )

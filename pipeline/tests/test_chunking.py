@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from car_talk_pipeline.chunking.chunker import (
+from car_talk_pipeline.chunking import (
     HARD_MAX,
     PROS_CONS_HEADING,
     QA_HEADING,
+    ContentType,
     chunk_document,
     embedding_text,
 )
-from car_talk_pipeline.chunking.models import ContentType
-from car_talk_pipeline.scraping.models import (
+from car_talk_pipeline.models import (
     ArticleType,
     CanonicalDocument,
     CoverageScope,

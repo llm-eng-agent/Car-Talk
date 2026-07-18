@@ -1,4 +1,4 @@
-"""Structure-aware paragraph-grouping chunker (spec section 7, Locked Contract).
+"""Structure-aware chunking of canonical documents (spec section 7, Locked Contract).
 
 Rules (locked): soft target 400 tokens, packing target up to 450 using complete
 consecutive paragraphs, hard maximum 500. A section at or below 500 tokens is one chunk;
@@ -13,11 +13,12 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from enum import StrEnum
+from typing import Protocol
 
-from car_talk_pipeline.scraping.models import CanonicalDocument, SourceEntry
+from pydantic import BaseModel, ConfigDict, Field
 
-from .models import Chunk, ContentType
-from .tokenizer import TokenCounter
+from car_talk_pipeline.models import CanonicalDocument, SourceEntry
 
 PACK_TARGET = 450
 HARD_MAX = 500
@@ -31,9 +32,74 @@ PROS_CONS_HEADING = "יתרונות וחסרונות"
 PUBLISHER_FAQ_PROVENANCE = "publisher_faq"
 
 
+# --- Models -------------------------------------------------------------------------
+
+
+class ContentType(StrEnum):
+    """Which part of the document a chunk came from."""
+
+    SECTION = "section"
+    QA = "qa"
+    PROS_CONS = "pros_cons"
+
+
+class Chunk(BaseModel):
+    """One retrievable unit of a document (spec section 7.7).
+
+    ``content`` is the original text; the enriched embedding text (vehicle/article/section
+    header) is built separately by ``embedding_text`` (spec section 7.6). ``content_type``
+    and ``provenance`` preserve the reviewer-prose vs publisher-FAQ / pros-cons distinction
+    (see docs/adr/0001).
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    chunk_id: str
+    document_id: str
+    vehicle_id: str
+    vehicle_make: str
+    vehicle_model: str
+    model_year: int | None
+    canonical_vehicle_name: str
+    article_title: str
+    section_heading: str
+    chunk_index: int
+    content: str = Field(min_length=1)
+    source_url: str
+    token_count: int
+    content_type: ContentType
+    provenance: str | None = None
+
+
+# --- Token counting -----------------------------------------------------------------
+
+
+class TokenCounter(Protocol):
+    def __call__(self, text: str) -> int: ...
+
+
+class TiktokenCounter:
+    """Counts tokens with the encoding tiktoken selects for the embedding model.
+
+    Encoding data loads lazily on first use, so this is only built in the live pipeline
+    path, never in offline tests (which inject a trivial counter).
+    """
+
+    def __init__(self, model: str = "text-embedding-3-small") -> None:
+        import tiktoken
+
+        self._encoding = tiktoken.encoding_for_model(model)
+
+    def __call__(self, text: str) -> int:
+        return len(self._encoding.encode(text))
+
+
+# --- Chunking -----------------------------------------------------------------------
+
+
 @dataclass(frozen=True)
 class _Block:
-    """A heading + ordered text units to be chunked as one section (no crossing)."""
+    """A heading + ordered text units chunked as one section (no crossing)."""
 
     heading: str
     units: list[str]

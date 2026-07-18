@@ -77,6 +77,9 @@ Structure-aware chunker + dense embeddings (Qdrant indexing deferred to 3b):
 - **Live run:** 162 chunks across the 8 articles (147 section / 13 Q&A / 2 pros/cons),
   all ≤500 tokens (max 489), all 1536-d. Re-run embeds 0 (fully cached).
 - OpenAI key loaded from git-ignored `.env` via `config.py`; never logged.
+- Lean module layout for the POC: the pipeline is 8 flat modules under
+  `car_talk_pipeline/` (`config`, `hashing`, `models`, `adapter`, `ingest`, `chunking`,
+  `embedding`) — no thin one-purpose files, no interface/impl split for a single provider.
 
 ## Open flags / dependencies
 

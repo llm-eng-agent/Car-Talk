@@ -12,13 +12,13 @@ from pathlib import Path
 
 import pytest
 
-from car_talk_pipeline.scraping.auto_co_il_adapter import (
+from car_talk_pipeline.adapter import (
     INTRODUCTION_HEADING,
     ExtractionError,
     extract_document,
     normalized_content,
 )
-from car_talk_pipeline.scraping.models import (
+from car_talk_pipeline.models import (
     ArticleType,
     CoverageScope,
     QASource,

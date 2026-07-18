@@ -14,8 +14,8 @@ dependencies = [
 ]
 
 [project.scripts]
-car-talk-scrape = "car_talk_pipeline.scraping.run:main"
-car-talk-embed = "car_talk_pipeline.embedding.run:main"
+car-talk-scrape = "car_talk_pipeline.ingest:main"
+car-talk-embed = "car_talk_pipeline.embedding:main"
 
 [dependency-groups]
 dev = [

@@ -7,11 +7,9 @@ from typing import Any, cast
 
 import pytest
 
-from car_talk_pipeline.chunking.chunker import chunk_document
-from car_talk_pipeline.embedding.openai_provider import OpenAIEmbeddingProvider
-from car_talk_pipeline.embedding.provider import EmbeddingError
-from car_talk_pipeline.embedding.run import embed_chunks
-from car_talk_pipeline.scraping.models import (
+from car_talk_pipeline.chunking import chunk_document
+from car_talk_pipeline.embedding import EmbeddingError, OpenAIEmbeddingProvider, embed_chunks
+from car_talk_pipeline.models import (
     ArticleType,
     CanonicalDocument,
     CoverageScope,
