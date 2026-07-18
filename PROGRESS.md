@@ -8,15 +8,15 @@ that step. One PR per task; only the owner merges.
 
 Legend: ✅ done · 🔄 in progress · ⬜ not started · ⛔ blocked
 
-_Last updated: 2026-07-18 (Phase 3a)_
+_Last updated: 2026-07-18 (Phase 3a merged)_
 
 ## Status by phase
 
 | Phase | Status | Notes |
 |---|---|---|
 | Spike A — Scraping | ✅ | Merged in PR #1 |
-| Spike B — Hybrid retrieval | ⬜ | Needs OpenAI + Qdrant keys |
-| Spike C — Structured generation | ⬜ | Needs OpenAI key; verify model id first |
+| Spike B — Hybrid retrieval | ⬜ | Needs Qdrant key (OpenAI ready) |
+| Spike C — Structured generation | ⬜ | Verify gpt-5.6-terra id first (OpenAI ready) |
 | Phase 2 — Full ingestion (8 articles) | ✅ | All 8 extracted + validated; idempotent |
 | Phase 3a — Chunking + embeddings | ✅ | 162 chunks embedded (1536-d); cache works |
 | Phase 3b — Qdrant indexing | ⛔ | Blocked on Qdrant key |
@@ -97,4 +97,4 @@ Structure-aware chunker + dense embeddings (Qdrant indexing deferred to 3b):
 | #1 | Ingestion foundation and Spike A scraping | Merged |
 | #2 | PROGRESS.md progress tracker | Merged |
 | #3 | Phase 2 — full ingestion of 8 articles | Merged |
-| #4 | Phase 3a — chunking + embeddings | Open |
+| #4 | Phase 3a — chunking + embeddings (+ module consolidation 19→8) | Merged |
