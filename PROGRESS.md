@@ -8,18 +8,18 @@ that step. One PR per task; only the owner merges.
 
 Legend: ✅ done · 🔄 in progress · ⬜ not started · ⛔ blocked
 
-_Last updated: 2026-07-18 (Phase 3a merged)_
+_Last updated: 2026-07-18 (Phase 3b: Qdrant indexing)_
 
 ## Status by phase
 
 | Phase | Status | Notes |
 |---|---|---|
 | Spike A — Scraping | ✅ | Merged in PR #1 |
-| Spike B — Hybrid retrieval | ⬜ | Needs Qdrant key (OpenAI ready) |
+| Spike B — Hybrid retrieval | ⬜ | Collection now live; query side is next |
 | Spike C — Structured generation | ⬜ | Verify gpt-5.6-terra id first (OpenAI ready) |
 | Phase 2 — Full ingestion (8 articles) | ✅ | All 8 extracted + validated; idempotent |
 | Phase 3a — Chunking + embeddings | ✅ | 162 chunks embedded (1536-d); cache works |
-| Phase 3b — Qdrant indexing | ⛔ | Blocked on Qdrant key |
+| Phase 3b — Qdrant indexing | ✅ | 162 points in `car_review_chunks_v1` (dense + BM25) |
 | Phase 4 — Evaluation dataset (30 Hebrew queries) | ⬜ | |
 | Phase 5 — Retrieval orchestrator | ⬜ | |
 | Phase 6 — Context + generation | ⬜ | |
@@ -81,10 +81,31 @@ Structure-aware chunker + dense embeddings (Qdrant indexing deferred to 3b):
   `car_talk_pipeline/` (`config`, `hashing`, `models`, `adapter`, `ingest`, `chunking`,
   `embedding`) — no thin one-purpose files, no interface/impl split for a single provider.
 
+## ✅ Phase 3b — Qdrant indexing
+
+Hybrid (dense + BM25) index of the Phase 3a chunks in one shared collection:
+
+- New `qdrant_index.py` module + `car-talk-index` CLI (`--all` / `--document-id` /
+  `--recreate`), mirroring the `car-talk-embed` shape. Reads chunks + cached dense vectors
+  from `.tmp/` — **no re-embedding**; the client is injectable so tests run offline.
+- Collection `car_review_chunks_v1` (locked contract, §8): named `dense` vector (1536-d,
+  cosine) + named `bm25` sparse vector (server-side `qdrant/bm25`, IDF), RRF fusion at
+  query time. Payload keyword indexes on `vehicle_id, document_id, vehicle_make,
+  vehicle_model, article_type, coverage_scope`; integer index on `model_year`; full chunk
+  text stored for grounding.
+- Point id = deterministic UUIDv5 of `chunk_id` → idempotent upsert; replace-by-document
+  deletes a document's points by `document_id` filter before re-inserting (§20.6). The whole
+  collection is rebuildable from processed files (§8.6).
+- **Live run:** 162 points across the 8 documents; re-run `--all` stays at 162 (no dupes).
+  Hybrid query returns the right vehicle's chunks and a `document_id` filter narrows results.
+  Dense query vectors are embedded client-side (OpenAI); only BM25 uses Qdrant inference.
+- 9 offline tests (`_FakeQdrantClient`); CI stays live-Qdrant-free.
+
 ## Open flags / dependencies
 
 - ✅ **OpenAI key** available (in git-ignored `.env`).
-- ⛔ **Qdrant Cloud + Upstash keys** not yet available — Qdrant needed for Phase 3b indexing.
+- ✅ **Qdrant Cloud key** available; Phase 3b index is live. **Upstash keys** still absent
+  (needed only for Phase 10 rate limiting, not retrieval).
 - ⚠️ Verify the spec's model id `gpt-5.6-terra` + OpenAI Responses API against a live
   account **before** the generation phases.
 - When building citations/generation: present FAQ Q&A as *publisher info* (`publisher_faq`),
@@ -98,3 +119,4 @@ Structure-aware chunker + dense embeddings (Qdrant indexing deferred to 3b):
 | #2 | PROGRESS.md progress tracker | Merged |
 | #3 | Phase 2 — full ingestion of 8 articles | Merged |
 | #4 | Phase 3a — chunking + embeddings (+ module consolidation 19→8) | Merged |
+| #6 | Phase 3b — Qdrant hybrid indexing | Open |
