@@ -66,7 +66,7 @@ describe("generateAnswer", () => {
   it("accepts a valid first response without retrying", async () => {
     const { model, calls } = queuedModel([validOutput()]);
     const result = await generateAnswer(built, params, model);
-    expect(result).toEqual({ ok: true, output: validOutput() });
+    expect(result).toEqual({ ok: true, output: validOutput(), attempts: 1 });
     expect(calls()).toBe(1);
   });
 

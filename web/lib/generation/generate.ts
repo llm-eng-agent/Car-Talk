@@ -23,8 +23,8 @@ export interface GenerateParams {
 }
 
 export type GenerateResult =
-  | { ok: true; output: GenerationOutput }
-  | { ok: false; errors: string[] };
+  | { ok: true; output: GenerationOutput; attempts: number }
+  | { ok: false; errors: string[]; attempts: number };
 
 export async function generateAnswer(
   built: BuiltContext,
@@ -41,13 +41,13 @@ export async function generateAnswer(
         userMessage: params.userMessage,
         allowedVehicleIds: params.allowedVehicleIds,
       });
-      if (validation.ok) return { ok: true, output };
+      if (validation.ok) return { ok: true, output, attempts: attempt + 1 };
       errors = validation.errors;
     } catch (error) {
       errors = [error instanceof Error ? error.message : String(error)];
     }
   }
-  return { ok: false, errors };
+  return { ok: false, errors, attempts: MAX_ATTEMPTS };
 }
 
 // Default model: a real Responses-API structured call via the direct OpenAI provider (spec §14 —
