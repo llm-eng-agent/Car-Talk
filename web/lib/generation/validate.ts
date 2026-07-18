@@ -72,13 +72,13 @@ export function validateGenerationOutput(
   // the current user message (spec line 363).
   for (const [i, p] of output.preference_updates.entries()) {
     if (!ASPECT_SET.has(p.aspect)) errors.push(`Unknown aspect '${p.aspect}' at preference_updates[${i}]`);
-    if (!ctx.userMessage.includes(p.evidence_text)) {
-      errors.push(`preference_updates[${i}].evidence_text is not a substring of the user message`);
+    if (!p.evidence_text.trim() || !ctx.userMessage.includes(p.evidence_text)) {
+      errors.push(`preference_updates[${i}].evidence_text is empty or not a substring of the user message`);
     }
   }
   for (const [i, u] of output.usage_pattern_updates.entries()) {
-    if (!ctx.userMessage.includes(u.evidence_text)) {
-      errors.push(`usage_pattern_updates[${i}].evidence_text is not a substring of the user message`);
+    if (!u.evidence_text.trim() || !ctx.userMessage.includes(u.evidence_text)) {
+      errors.push(`usage_pattern_updates[${i}].evidence_text is empty or not a substring of the user message`);
     }
   }
 

@@ -97,6 +97,22 @@ describe("validateGenerationOutput", () => {
     expect(result.errors.some((e) => e.includes("evidence_text"))).toBe(true);
   });
 
+  it("rejects an empty evidence_text on a preference update", () => {
+    const out = base();
+    out.preference_updates[0].evidence_text = "";
+    const result = validateGenerationOutput(out, ctx);
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((e) => e.includes("preference_updates[0].evidence_text is empty"))).toBe(true);
+  });
+
+  it("rejects an empty evidence_text on a usage-pattern update", () => {
+    const out = base();
+    out.usage_pattern_updates = [{ usage_pattern: "family", source: "inferred", evidence_text: "   " }];
+    const result = validateGenerationOutput(out, ctx);
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((e) => e.includes("usage_pattern_updates[0].evidence_text is empty"))).toBe(true);
+  });
+
   it("rejects a declared winner under insufficient_evidence", () => {
     const out = base();
     out.status = "insufficient_evidence";

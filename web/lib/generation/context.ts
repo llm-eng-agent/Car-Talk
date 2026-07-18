@@ -7,10 +7,13 @@ import { loadVehicleCatalog } from "../retrieval/catalog";
 import { type EvidencePackage } from "../retrieval/types";
 import { buildCitations, type Citation, type CitationMap } from "./citations";
 
-// Per-route chunk budget (spec §13.3 / §23.2): single 5; otherwise up to 3 per vehicle → 6 for
-// two vehicles, 9 for three (open recommendation), matching the context-limit table.
-const SINGLE_VEHICLE_CAP = 5;
-const PER_VEHICLE_CAP = 3;
+// Per-vehicle chunk budget that keeps evidence balanced while never exceeding the §23.2 total
+// context ceiling of 9: single 5; two → 6; three → 9; four → 8 (2 each, still ≤ 9).
+function perVehicleCap(vehicleCount: number): number {
+  if (vehicleCount <= 1) return 5;
+  if (vehicleCount <= 3) return 3;
+  return 2;
+}
 
 export interface SessionContext {
   activeVehicleIds?: string[];
@@ -47,7 +50,7 @@ export function buildContext(
 // Trim each vehicle's chunk list to the per-route budget before citation IDs are assigned, so IDs
 // stay contiguous over exactly the included evidence.
 function capEvidence(pkg: EvidencePackage): EvidencePackage {
-  const perVehicle = pkg.vehicles.length === 1 ? SINGLE_VEHICLE_CAP : PER_VEHICLE_CAP;
+  const perVehicle = perVehicleCap(pkg.vehicles.length);
   return { ...pkg, vehicles: pkg.vehicles.map((v) => ({ ...v, chunks: v.chunks.slice(0, perVehicle) })) };
 }
 

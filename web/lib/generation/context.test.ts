@@ -43,6 +43,23 @@ describe("buildContext", () => {
     expect(contextText).toContain("Vehicle: Kia EV9");
   });
 
+  it("caps a four-vehicle comparison to the §23.2 budget (≤9 total, 2 per vehicle)", () => {
+    const { citations } = buildContext(
+      "השוואה בין ארבעה",
+      pkg("comparison", [
+        { vehicleId: "mg_s6", chunks: manyChunks("mg_s6", 3) },
+        { vehicleId: "kia_ev9", chunks: manyChunks("kia_ev9", 3) },
+        { vehicleId: "audi_rs3", chunks: manyChunks("audi_rs3", 3) },
+        { vehicleId: "genesis_gv80", chunks: manyChunks("genesis_gv80", 3) },
+      ]),
+    );
+    expect(citations.length).toBeLessThanOrEqual(9);
+    expect(citations).toHaveLength(8);
+    for (const vehicleId of ["mg_s6", "kia_ev9", "audi_rs3", "genesis_gv80"]) {
+      expect(citations.filter((c) => c.vehicleId === vehicleId)).toHaveLength(2);
+    }
+  });
+
   it("labels the evidence untrusted and renders the fixed section layout", () => {
     const { contextText } = buildContext("מה הטווח?", pkg("single", [{ vehicleId: "mg_s6", chunks: [chunk("mg_s6", 0)] }]));
 
