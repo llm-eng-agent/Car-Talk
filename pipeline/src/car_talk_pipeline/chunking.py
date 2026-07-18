@@ -40,7 +40,7 @@ class ContentType(StrEnum):
 
 
 class Chunk(BaseModel):
-    """One retrievable unit of a document """
+    """One retrievable unit of a document"""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
