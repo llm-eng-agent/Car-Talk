@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from car_talk_pipeline.evaluate import (
+    balanced_coverage_hit,
     evaluate_dataset,
     expected_all_present,
-    precision_at_k_vehicle,
+    precision_at_k,
     recall_at_k,
     retrieval_text,
 )
@@ -36,16 +37,28 @@ def test_recall_at_k() -> None:
     assert recall_at_k(set(), [_chunk("a", "v")]) == 0.0
 
 
-def test_precision_at_k_vehicle() -> None:
+def test_precision_at_k_scores_against_gold_chunks() -> None:
     retrieved = [_chunk("a", "mg_s6"), _chunk("b", "mg_s6"), _chunk("c", "other")]
-    assert precision_at_k_vehicle({"mg_s6"}, retrieved, k=5) == 0.4  # 2 of 5
-    assert precision_at_k_vehicle(set(), retrieved, k=0) == 0.0
+    # Only "a" is a gold chunk → 1 of 5, even though 2 chunks are from the expected vehicle.
+    assert precision_at_k({"a"}, retrieved, k=5) == 0.2
+    assert precision_at_k(set(), retrieved, k=0) == 0.0
 
 
 def test_expected_all_present() -> None:
     retrieved = [_chunk("a", "mg_s6"), _chunk("b", "aion_ht")]
     assert expected_all_present({"mg_s6", "aion_ht"}, retrieved) is True
     assert expected_all_present({"mg_s6", "genesis_gv80"}, retrieved) is False
+
+
+def test_balanced_coverage_requires_a_gold_chunk_per_vehicle() -> None:
+    retrieved = [_chunk("mg_gold", "mg_s6"), _chunk("aion_gold", "aion_ht")]
+    assert (
+        balanced_coverage_hit({"mg_s6": ["mg_gold"], "aion_ht": ["aion_gold"]}, retrieved) is True
+    )
+    # Aion appears, but not via its gold chunk → not covered.
+    assert (
+        balanced_coverage_hit({"mg_s6": ["mg_gold"], "aion_ht": ["aion_other"]}, retrieved) is False
+    )
 
 
 def test_retrieval_text_prepends_prior_user_turns() -> None:

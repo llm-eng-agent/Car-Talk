@@ -128,21 +128,24 @@ Query-side retrieval + the evaluation that closes Phase 4's DoD (§18.3/§18.4):
   filter), reusable by the Phase 5 orchestrator. Dense query vectors embedded client-side
   (OpenAI); BM25 server-side. Client + provider injectable → offline tests.
 - New `evaluate.py` + `car-talk-eval` CLI: runs all 3 modes over the golden set, computes
-  Recall@5 / Precision@5 (vehicle-level) / vehicle-resolution / balanced-coverage, applies
-  the hybrid-acceptance rule, and writes `docs/eval_report.md` with the ablation table,
-  gate pass/fail, failure cases, and interpretation.
+  Recall@5 / Precision@5 / vehicle-resolution / balanced-coverage, applies the
+  hybrid-acceptance rule, and writes `docs/eval_report.md` with the ablation table, gate
+  pass/fail, failure cases, and interpretation. **All four metrics score against the labelled
+  gold `chunk_id`s** (not vehicle membership) so a gate never passes on wrong-aspect evidence.
 - 12 offline tests (metric helpers + scripted-retriever runner + fake-client query builders).
 
-**Ablation result (live, top-5):** hybrid R@5 0.60 · P@5 0.84 · resolution 0.86 · coverage
-0.67. Hybrid **kept** — best vehicle resolution and coverage; ΔRecall +0.05, ΔCoverage +0.42
-over dense-only. Spike B checks pass: exact term "178,888"→MG (BM25), vehicle filter works.
+**Ablation result (live, top-5, approximate/HNSW ±a query or two):** hybrid R@5 ~0.61 · P@5
+~0.22 · resolution ~0.86 · coverage ~0.17. Hybrid is **kept** by the spec rule (beats
+dense-only), but **BM25-only is the strongest single mode** (R@5 0.65, coverage 0.33) — RRF
+fusion with dense dilutes BM25's exact-term rankings on this Hebrew corpus (reconsider in
+Phase 5). Spike B checks pass: exact term "178,888"→MG (BM25), vehicle filter works.
 
-**Finding (not a bug):** Recall@5 / resolution / coverage are **below the §18.3 gates** for
-*raw retrieval*. Causes (in `docs/eval_report.md`): strict chunk-level gold (relevant
-*sibling* chunks in the same section score 0), single-pool top-5 lets one vehicle dominate
-comparisons, and un-named recommendation queries need query→vehicle resolution. All three are
-**Phase 5 orchestrator** work; per spec the gates are re-evaluated there. RRF/top-k were **not**
-tuned to force a pass (spec line 567).
+**Finding (not a bug):** all four gates are **below the §18.3 targets** for *raw retrieval*.
+Causes (in `docs/eval_report.md`): strict chunk-level gold (relevant *sibling* chunks in the
+same section score 0 — resolution 0.86 shows the right vehicle is found), single-pool top-5
+lets one vehicle dominate comparisons, and un-named recommendation queries need query→vehicle
+resolution. All three are **Phase 5 orchestrator** work; per spec the gates are re-evaluated
+there. RRF/top-k were **not** tuned to force a pass (spec line 567).
 
 ## Open flags / dependencies
 

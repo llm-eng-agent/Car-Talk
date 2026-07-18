@@ -1,15 +1,18 @@
 """Retrieval evaluation runner and ablation (spec sections 18.3-18.4, Phase 4 DoD).
 
 Runs dense-only, BM25-only, and hybrid-RRF retrieval over the Hebrew golden set and reports
-Recall@5, Precision@5 (vehicle-level), vehicle-resolution accuracy, and balanced evidence
-coverage per mode, plus the hybrid-vs-dense acceptance verdict and real failure cases.
+Recall@5, Precision@5, vehicle-resolution accuracy, and balanced evidence coverage per mode,
+plus the hybrid-vs-dense acceptance verdict and real failure cases.
 
-Metric definitions (the spec fixes targets, not formulas):
+Metric definitions (the spec fixes targets, not formulas). Relevance is the labelled gold
+(``relevant_chunk_ids``), never mere vehicle membership, so a metric never passes on
+wrong-aspect evidence:
 - Recall@5  = mean over gold-bearing queries of |gold ∩ top5| / |gold| (chunk-level).
-- Precision@5 = mean of (top5 hits whose vehicle ∈ expected) / k (vehicle-level relevance,
-  since chunks carry no aspect labels).
-- Vehicle resolution = fraction of queries whose expected vehicles all appear in top5.
-- Balanced coverage = same predicate over multi-vehicle (comparison/rec) queries.
+- Precision@5 = mean over the same queries of |gold ∩ top5| / k (chunk-level).
+- Vehicle resolution = fraction of queries whose expected vehicles all appear in top5
+  (vehicle-level — this metric asks only whether the right vehicle was found).
+- Balanced coverage = over multi-vehicle queries, fraction where every compared vehicle
+  contributes at least one of its own gold chunks to top5.
 Follow-up queries are contextualised by prepending prior user turns (stand-in for the
 Phase 8 query rewriter). Unanswerable queries have no gold and are reported separately.
 
@@ -75,17 +78,34 @@ def recall_at_k(gold: set[str], retrieved: list[RetrievedChunk]) -> float:
     return hits / len(gold)
 
 
-def precision_at_k_vehicle(
-    expected_vehicles: set[str], retrieved: list[RetrievedChunk], k: int
-) -> float:
+def precision_at_k(gold: set[str], retrieved: list[RetrievedChunk], k: int) -> float:
+    """Fraction of the top-k that are labelled gold chunks (chunk-level relevance)."""
+
     if k <= 0:
         return 0.0
-    relevant = sum(1 for chunk in retrieved if chunk.vehicle_id in expected_vehicles)
-    return relevant / k
+    hits = sum(1 for chunk in retrieved if chunk.chunk_id in gold)
+    return hits / k
 
 
 def expected_all_present(expected_vehicles: set[str], retrieved: list[RetrievedChunk]) -> bool:
+    """Whether every expected vehicle appears at all (vehicle-resolution predicate)."""
+
     return expected_vehicles.issubset({chunk.vehicle_id for chunk in retrieved})
+
+
+def balanced_coverage_hit(
+    relevant_chunk_ids: dict[str, list[str]], retrieved: list[RetrievedChunk]
+) -> bool:
+    """Whether every vehicle contributes at least one of its own gold chunks to the results.
+
+    Stricter than vehicle presence: a vehicle appearing only via unrelated chunks does not
+    count as covered (spec §18.3 balanced coverage = relevant evidence per compared vehicle).
+    """
+
+    retrieved_ids = {chunk.chunk_id for chunk in retrieved}
+    return all(
+        any(chunk_id in retrieved_ids for chunk_id in ids) for ids in relevant_chunk_ids.values()
+    )
 
 
 # --- Aggregation types --------------------------------------------------------------
@@ -149,15 +169,11 @@ def _mode_metrics(
     coverage_queries = [q for q in queries if len(q.expected_vehicle_ids) >= 2]
 
     recalls = [recall_at_k(gold_chunk_ids(q), hits[q.id]) for q in gold_queries]
-    precisions = [
-        precision_at_k_vehicle(set(q.expected_vehicle_ids), hits[q.id], top_k) for q in gold_queries
-    ]
+    precisions = [precision_at_k(gold_chunk_ids(q), hits[q.id], top_k) for q in gold_queries]
     resolutions = [
         expected_all_present(set(q.expected_vehicle_ids), hits[q.id]) for q in resolution_queries
     ]
-    coverages = [
-        expected_all_present(set(q.expected_vehicle_ids), hits[q.id]) for q in coverage_queries
-    ]
+    coverages = [balanced_coverage_hit(q.relevant_chunk_ids, hits[q.id]) for q in coverage_queries]
     return ModeMetrics(
         mode=mode,
         recall_at_5=_mean(recalls),
@@ -267,6 +283,19 @@ def render_report(report: EvalReport) -> str:
     lines.append("")
     lines.append(f"**{verdict}** — {reason}")
     lines.append("")
+    # The spec's rule compares hybrid to dense-only; call out any single mode that beats it.
+    best_recall = max(report.mode_metrics.values(), key=lambda m: m.recall_at_5)
+    best_cover = max(report.mode_metrics.values(), key=lambda m: m.balanced_coverage)
+    if best_recall.mode is not RetrievalMode.HYBRID or best_cover.mode is not RetrievalMode.HYBRID:
+        lines.append(
+            f"> Note: the strongest *single* mode is **{best_recall.mode.value}** on Recall@5 "
+            f"({best_recall.recall_at_5:.3f}) and **{best_cover.mode.value}** on coverage "
+            f"({best_cover.balanced_coverage:.3f}) — both ≥ hybrid. RRF fusion with dense "
+            "dilutes BM25's strong exact-term rankings on this Hebrew corpus. The acceptance "
+            "rule only requires benefit over dense-only, but BM25-only is a live alternative "
+            "to reconsider in the Phase 5 orchestrator."
+        )
+        lines.append("")
 
     lines.append("## Failure cases (hybrid, recall < 1.0)")
     lines.append("")
@@ -284,9 +313,9 @@ def render_report(report: EvalReport) -> str:
     lines.append("## Interpretation")
     lines.append("")
     lines.append(
-        f"Hybrid vehicle resolution ({hybrid.vehicle_resolution:.2f}) and precision "
-        f"({hybrid.precision_at_5:.2f}) are far higher than chunk-level Recall@5 "
-        f"({hybrid.recall_at_5:.2f}): retrieval usually surfaces the **right vehicle**, just "
+        f"Hybrid vehicle resolution ({hybrid.vehicle_resolution:.2f}) is far higher than "
+        f"chunk-level Recall@5 ({hybrid.recall_at_5:.2f}) and Precision@5 "
+        f"({hybrid.precision_at_5:.2f}): retrieval usually surfaces the **right vehicle**, just "
         "not always the exact labelled gold chunk. Recurring structural causes (see failure "
         "cases):"
     )
@@ -311,9 +340,13 @@ def render_report(report: EvalReport) -> str:
     lines.append(
         "These are baseline numbers for **raw retrieval only**; the §18.3 gates are evaluated "
         "against the full retrieval orchestrator (Phase 5), which adds vehicle resolution and "
-        "per-vehicle evidence gathering. The ablation still justifies keeping hybrid: it "
-        "improves resolution and coverage over dense-only without degrading recall beyond "
-        "tolerance."
+        "per-vehicle evidence gathering. Hybrid beats dense-only (the spec's acceptance "
+        "reference), but note above that BM25-only is the strongest single mode here."
+    )
+    lines.append("")
+    lines.append(
+        "_Qdrant uses approximate (HNSW) search, so metrics may vary by a query or two between "
+        "runs; this report is a representative snapshot, not an exact fixed value._"
     )
     lines.append("")
     lines.append("## Unanswerable queries — hybrid top-1 score (for abstention design)")
