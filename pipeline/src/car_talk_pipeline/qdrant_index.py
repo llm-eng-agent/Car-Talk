@@ -258,9 +258,17 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument(
         "--recreate",
         action="store_true",
-        help="Drop and recreate the collection before indexing (clean full rebuild).",
+        help="Drop and recreate the collection before indexing (requires --all: it drops "
+        "the whole shared collection, so a single-document recreate would delete every "
+        "other vehicle's points).",
     )
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if args.recreate and not args.all:
+        parser.error(
+            "--recreate may only be used with --all; it drops the whole shared collection, "
+            "so recreating for a single --document-id would remove every other vehicle."
+        )
+    return args
 
 
 def _build_indexer(settings: Settings) -> QdrantIndexer:

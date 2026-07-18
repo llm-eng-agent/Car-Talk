@@ -22,6 +22,7 @@ from car_talk_pipeline.models import (
 from car_talk_pipeline.qdrant_index import (
     QdrantIndexer,
     QdrantIndexError,
+    _parse_args,
     index_document_from_disk,
     point_id,
 )
@@ -149,6 +150,15 @@ def test_ensure_collection_recreate_drops_first() -> None:
     _indexer(client).ensure_collection(recreate=True)
     assert client.deleted_collections == ["car_review_chunks_v1"]
     assert len(client.created) == 1
+
+
+def test_recreate_requires_all() -> None:
+    # --recreate drops the whole shared collection, so it is only valid with --all.
+    with pytest.raises(SystemExit):
+        _parse_args(["--document-id", "mg_s6_review", "--recreate"])
+    # These parse fine.
+    assert _parse_args(["--all", "--recreate"]).recreate is True
+    assert _parse_args(["--document-id", "mg_s6_review"]).recreate is False
 
 
 def test_point_id_is_deterministic_uuid5() -> None:
