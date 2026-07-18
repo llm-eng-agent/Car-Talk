@@ -1,6 +1,6 @@
 # Car-Talk 🚗
 
-It helps users understand, compare, and choose cars, answering exclusively from real automotive review articles on[Auto.co.il](https://www.auto.co.il). 
+It helps users understand, compare, and choose cars, answering exclusively from real automotive review articles on [Auto.co.il](https://www.auto.co.il). 
 
 ![Car-Talk homepage](.github/assets/home.png)
 
@@ -56,9 +56,7 @@ web/         Next.js chat app (retrieval, generation, session, UI)
 docs/        Eval report and example processed document
 ```
 
-## Getting started
 
-`https://car-talk-ellie-26.vercel.app/`
 
 
 
