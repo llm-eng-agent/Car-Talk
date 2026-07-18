@@ -3,7 +3,7 @@
 // an empty result means the caller uses a general review query (conclusion/strengths/
 // weaknesses).
 import { loadAspectLexicon } from "./catalog";
-import { phrasePresent } from "./matcher";
+import { phraseIndex } from "./matcher";
 import { normalize } from "./normalize";
 import { ASPECTS, type Aspect, MAX_ASPECTS } from "./types";
 
@@ -12,12 +12,19 @@ export function resolveAspects(
   lexicon: Record<Aspect, string[]> = loadAspectLexicon(),
 ): Aspect[] {
   const haystack = normalize(text);
-  const found: Aspect[] = [];
+  // Match each aspect at the earliest position any of its keywords appears, then keep the
+  // first MAX_ASPECTS in the user's stated order (spec §11.5) — not the fixed ASPECTS order.
+  const matched: { aspect: Aspect; at: number }[] = [];
   for (const aspect of ASPECTS) {
     const keywords = lexicon[aspect] ?? [];
-    if (keywords.some((keyword) => phrasePresent(haystack, normalize(keyword)))) {
-      found.push(aspect);
+    let at = Infinity;
+    for (const keyword of keywords) {
+      const idx = phraseIndex(haystack, normalize(keyword));
+      if (idx !== -1 && idx < at) at = idx;
     }
+    if (at !== Infinity) matched.push({ aspect, at });
   }
-  return found.slice(0, MAX_ASPECTS);
+  // Stable sort: ties (same position) fall back to ASPECTS order, so results stay deterministic.
+  matched.sort((a, b) => a.at - b.at);
+  return matched.slice(0, MAX_ASPECTS).map((m) => m.aspect);
 }

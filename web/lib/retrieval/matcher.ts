@@ -9,9 +9,16 @@ function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function phrasePresent(haystackNorm: string, phraseNorm: string): boolean {
-  if (!phraseNorm) return false;
+// Start index of the phrase within the haystack, or -1 if absent. Lets callers order matches
+// by where they appear in the user's text (spec §11.5: keep the user's stated aspect order).
+export function phraseIndex(haystackNorm: string, phraseNorm: string): number {
+  if (!phraseNorm) return -1;
   const prefix = HEB_START.test(phraseNorm) ? `${HEB_PREFIX}{0,2}` : "";
   const re = new RegExp(`(?:^|\\s)${prefix}${escapeRegExp(phraseNorm)}(?=\\s|$)`, "u");
-  return re.test(haystackNorm);
+  const match = re.exec(haystackNorm);
+  return match ? match.index : -1;
+}
+
+export function phrasePresent(haystackNorm: string, phraseNorm: string): boolean {
+  return phraseIndex(haystackNorm, phraseNorm) !== -1;
 }

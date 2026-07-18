@@ -15,8 +15,12 @@ describe("resolveAspects", () => {
     expect(resolveAspects("ספר לי על הרכב")).toEqual([]);
   });
 
-  it("caps at three aspects", () => {
+  it("keeps the user's stated order and caps at the first three", () => {
     const many = "מחיר, ביצועים, טווח, בטיחות, עיצוב, נוחות";
-    expect(resolveAspects(many).length).toBeLessThanOrEqual(3);
+    expect(resolveAspects(many)).toEqual([
+      "value_for_money",
+      "performance",
+      "efficiency_range",
+    ]);
   });
 });
