@@ -8,7 +8,7 @@ that step. One PR per task; only the owner merges.
 
 Legend: ✅ done · 🔄 in progress · ⬜ not started · ⛔ blocked
 
-_Last updated: 2026-07-18 (Phase 6a: context builder + generation schema)_
+_Last updated: 2026-07-18 (Phase 6b: live structured generation + answer pipeline)_
 
 ## Status by phase
 
@@ -16,13 +16,13 @@ _Last updated: 2026-07-18 (Phase 6a: context builder + generation schema)_
 |---|---|---|
 | Spike A — Scraping | ✅ | Merged in PR #1 |
 | Spike B — Hybrid retrieval | ✅ | Ablation run; hybrid kept (best resolution + coverage) |
-| Spike C — Structured generation | ⬜ | Verify gpt-5.6-terra id first (OpenAI ready) |
+| Spike C — Structured generation | ✅ | Folded into Phase 6b; gpt-5.6-terra verified live |
 | Phase 2 — Full ingestion (8 articles) | ✅ | All 8 extracted + validated; idempotent |
 | Phase 3a — Chunking + embeddings | ✅ | 162 chunks embedded (1536-d); cache works |
 | Phase 3b — Qdrant indexing | ✅ | 162 points in `car_review_chunks_v1` (dense + BM25) |
 | Phase 4 — Evaluation dataset (30 Hebrew queries) | ✅ | Dataset + eval runner + ablation report; gates are a Phase-5 baseline |
 | Phase 5 — Retrieval orchestrator | ✅ | 5a: resolver (100%); 5b: live routes + balanced evidence + low-evidence gate |
-| Phase 6 — Context + generation | 🔄 | 6a: context builder + citation map + schema + validation (offline); 6b (live call) gated on model id |
+| Phase 6 — Context + generation | ✅ | 6a: context/citations/schema/validation; 6b: live gpt-5.6-terra call + answer() pipeline (verified live) |
 | Phase 7 — Recommendation engine | ⬜ | |
 | Phase 8 — Session memory | ⬜ | |
 | Phase 9 — User interface (Next.js) | ⬜ | |
@@ -220,13 +220,30 @@ no LLM yet. Mirrors the 5a/5b split; the live call (6b) is gated on the model-id
 - Final abstention/out_of_scope **wording** is a provisional placeholder — deferred per owner
   until after the context stage.
 
+## ✅ Phase 6b — live structured generation + answer pipeline
+
+The one grounded generation call and the end-to-end pipeline (spec §14, §22, §23.1).
+
+- **`gpt-5.6-terra` verified live** on the account (GET /v1/models) — the standing blocker is
+  cleared; no model substitution. Added `ai` + `@ai-sdk/openai` (direct provider, no AI Gateway).
+- **`generate.ts`** — one Responses-API structured-output call (`openai.responses`, reasoning
+  effort low, no tools, no temperature, ≤1200 tokens) + server-side validation; **one retry** on
+  transient error / invalid schema / invalid citation, else safe fallback. Model is **injectable**
+  so retry+validation are unit-tested offline. `systemPrompt.ts` holds the §14.2 rules.
+- **`answer.ts`** — full pipeline: `orchestrate → terminal short-circuit (no model call) →
+  buildContext → generate → resolve citations`. Retrieval failure → safe error, no LLM call.
+- **Context fix found via live smoke:** the model was emitting the vehicle *display name* in
+  `winner_vehicle_id`; the context now shows `[vehicle_id: …]` and the prompt tells the model to
+  use it. Comparison answers then validate cleanly.
+- **Tests:** 8 offline (retry paths + pipeline short-circuits, fake model/retriever) + a live
+  generation smoke (single/comparison/out_of_scope) — **72 total pass**; `typecheck`/`build` clean.
+
 ## Open flags / dependencies
 
 - ✅ **OpenAI key** available (in git-ignored `.env`).
 - ✅ **Qdrant Cloud key** available; Phase 3b index is live. **Upstash keys** still absent
   (needed only for Phase 10 rate limiting, not retrieval).
-- ⚠️ Verify the spec's model id `gpt-5.6-terra` + OpenAI Responses API against a live
-  account **before** the generation phases.
+- ✅ **`gpt-5.6-terra` verified live** (real model on the account; Responses API works).
 - When building citations/generation: present FAQ Q&A as *publisher info* (`publisher_faq`),
   not as the reviewer's assessment.
 
@@ -243,4 +260,5 @@ no LLM yet. Mirrors the 5a/5b split; the live call (6b) is gated on the model-id
 | #8 | Phase 4b / Spike B — retrieval eval runner + ablation | Merged |
 | #9 | Phase 5a — web bootstrap + deterministic vehicle resolver | Merged |
 | #10 | Phase 5b — live retrieval orchestrator (routes + balanced evidence) | Merged |
-| #11 | Phase 6a — context builder + citation map + generation schema | Open |
+| #11 | Phase 6a — context builder + citation map + generation schema | Merged |
+| #12 | Phase 6b — live structured generation + answer pipeline | Open |

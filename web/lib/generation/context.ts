@@ -59,7 +59,9 @@ function renderEvidence(pkg: EvidencePackage, citations: Citation[], names: Map<
   const blocks: string[] = [];
   for (const vehicle of pkg.vehicles) {
     if (vehicle.chunks.length === 0) continue;
-    blocks.push(`Vehicle: ${names.get(vehicle.vehicleId) ?? vehicle.vehicleId}`);
+    // Show the internal vehicle_id so the model can fill winner_vehicle_id / constraint vehicle_id
+    // with the exact identifier the schema expects (not the display name).
+    blocks.push(`Vehicle: ${names.get(vehicle.vehicleId) ?? vehicle.vehicleId} [vehicle_id: ${vehicle.vehicleId}]`);
     for (const chunk of vehicle.chunks) {
       const citation = byId.get(chunk.chunkId);
       if (!citation) continue;

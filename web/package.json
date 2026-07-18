@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.16",
     "@qdrant/js-client-rest": "^1.18.0",
+    "ai": "^7.0.31",
     "next": "^15.1.6",
     "openai": "^6.48.0",
     "react": "^19.0.0",
