@@ -24,11 +24,15 @@ and each PR gets a preview URL. No tokens are shared.
    | `QDRANT_API_KEY` | ✅ | Qdrant Cloud API key |
    | `QDRANT_COLLECTION` | ✅ | `car_review_chunks_v1` |
    | `ENABLE_EXPERIMENTAL_COREPACK` | ✅ | `1` — makes the `packageManager` pin effective (see below) |
+   | `RATE_LIMIT_SECRET` | ✅ | random string, e.g. `openssl rand -hex 32` (HMAC key for IP hashing) |
    | `UPSTASH_REDIS_REST_URL` | ⭕ recommended | Upstash Redis REST URL |
    | `UPSTASH_REDIS_REST_TOKEN` | ⭕ recommended | Upstash Redis REST token |
-   | `RATE_LIMIT_SECRET` | ⭕ recommended | random string (HMAC key for IP hashing) |
 
-   Without the Upstash trio the rate limiter falls back to in-memory (per-instance). On serverless
+   Set a real `RATE_LIMIT_SECRET` — without it the IP-hashing key falls back to a public default, so
+   the rate-limit identifiers are no longer private. This matters most with Upstash, where those
+   identifiers are persisted server-side.
+
+   Without the Upstash pair the rate limiter falls back to in-memory (per-instance). On serverless
    that is weak protection across instances — add Upstash for durable, shared limiting.
 5. **Deploy.** Vercel builds `web/` and returns a public URL `https://<project>.vercel.app`.
 

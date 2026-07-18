@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { InMemoryRateLimiter, RATE_LIMIT, clientId, createRateLimiter, safeCheck } from "./rateLimit";
 
 describe("InMemoryRateLimiter", () => {
@@ -33,6 +33,25 @@ describe("InMemoryRateLimiter", () => {
 describe("createRateLimiter", () => {
   it("falls back to in-memory when Upstash is not configured", () => {
     expect(createRateLimiter({})).toBeInstanceOf(InMemoryRateLimiter);
+  });
+
+  it("warns when Upstash is configured without RATE_LIMIT_SECRET", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    // The warn fires before the Upstash client is built; the fake creds make that build throw, which
+    // is irrelevant to what we assert here — swallow it.
+    const upstashEnv = { UPSTASH_REDIS_REST_URL: "https://x.upstash.io", UPSTASH_REDIS_REST_TOKEN: "t" };
+    try {
+      createRateLimiter(upstashEnv);
+    } catch {}
+    expect(warn).toHaveBeenCalledOnce();
+    expect(warn.mock.calls[0][0]).toContain("rate_limit_secret_missing");
+
+    warn.mockClear();
+    try {
+      createRateLimiter({ ...upstashEnv, RATE_LIMIT_SECRET: "s" });
+    } catch {}
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
 
