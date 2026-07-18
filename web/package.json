@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "description": "Car-Talk online app (Next.js): vehicle resolver, retrieval orchestrator, generation",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
