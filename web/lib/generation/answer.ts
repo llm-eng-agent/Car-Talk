@@ -78,8 +78,10 @@ export async function answer(
   const citations = built.citations.filter((c) => used.has(c.id));
 
   // The application — not the model — makes the final pick, for multi-vehicle answers (spec §17.8).
+  // Never surface a recommendation when evidence is insufficient (spec §14.6).
+  const canRecommend = result.output.status === "complete" || result.output.status === "partial";
   const recommendation =
-    pkg.vehicles.length > 1
+    pkg.vehicles.length > 1 && canRecommend
       ? recommend(result.output, {
           candidateVehicleIds: pkg.vehicles.map((v) => v.vehicleId),
           priorityAspects: pkg.aspects,

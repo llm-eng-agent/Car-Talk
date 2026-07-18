@@ -59,6 +59,19 @@ describe("recommend", () => {
     expect(rec.decision).not.toBe("kia_ev9");
   });
 
+  it("ignores a not_satisfied constraint the user never requested", () => {
+    const rec = recommend(
+      out({
+        // The model volunteered a constraint the user did not ask for.
+        constraint_assessments: [constraint("mg_s6", "minimum_seats", "not_satisfied")],
+        aspect_assessments: [aspect("performance", "vehicle_advantage", "mg_s6")],
+      }),
+      { candidateVehicleIds: ["mg_s6", "kia_ev9"], priorityAspects: [], constraints: noConstraints },
+    );
+    expect(rec.eliminated).toEqual([]); // no constraint was requested
+    expect(rec.decision).toBe("mg_s6"); // falls through to aspect evidence
+  });
+
   it("uses the highest-priority aspect (lexicographic) to decide", () => {
     const rec = recommend(
       out({

@@ -39,16 +39,37 @@ export function parseConstraints(query: string): ParsedConstraints {
   if (seats !== undefined) constraints.minimumSeats = seats;
 
   const powertrains = (Object.keys(POWERTRAIN_ALIASES) as Powertrain[]).filter((p) =>
-    POWERTRAIN_ALIASES[p].some((alias) => phrasePresent(haystack, normalize(alias))),
+    POWERTRAIN_ALIASES[p].some((alias) => aliasAllowed(haystack, alias)),
   );
   if (powertrains.length > 0) constraints.allowedPowertrains = powertrains;
 
   const transmission = (Object.keys(TRANSMISSION_ALIASES) as Transmission[]).find((t) =>
-    TRANSMISSION_ALIASES[t].some((alias) => phrasePresent(haystack, normalize(alias))),
+    TRANSMISSION_ALIASES[t].some((alias) => aliasAllowed(haystack, alias)),
   );
   if (transmission) constraints.transmission = transmission;
 
   return constraints;
+}
+
+const NEGATIONS = ["לא", "בלי", "ללא", "אין", "not", "no", "without"];
+const HEB_PREFIX = "[והבלמשכ]{0,2}";
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// A powertrain/transmission alias counts only when present AND not negated: "לא דיזל" / "not diesel"
+// must NOT add diesel to the allowed set (that would invert the user's hard constraint).
+function aliasAllowed(haystack: string, alias: string): boolean {
+  const norm = normalize(alias);
+  return phrasePresent(haystack, norm) && !isNegated(haystack, norm);
+}
+
+// True when the alias is directly preceded by a negation word (Hebrew-prefix tolerant).
+function isNegated(haystack: string, aliasNorm: string): boolean {
+  const neg = NEGATIONS.map(escapeRegExp).join("|");
+  const re = new RegExp(`(?:^|\\s)(?:${neg})\\s+${HEB_PREFIX}${escapeRegExp(aliasNorm)}(?=\\s|$)`, "u");
+  return re.test(haystack);
 }
 
 function parseMinimumSeats(haystack: string): number | undefined {

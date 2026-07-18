@@ -27,13 +27,19 @@ export function recommend(output: GenerationOutput, params: RecommendParams): Re
   const eliminated: { vehicleId: string; constraint: string }[] = [];
   const blocked = new Set<string>(); // stated constraint unverifiable → no confident pick (§1855)
 
-  const anyConstraintStated =
-    params.constraints.minimumSeats !== undefined ||
-    (params.constraints.allowedPowertrains?.length ?? 0) > 0 ||
-    params.constraints.transmission !== undefined;
+  // Only constraints the user explicitly stated may eliminate a vehicle. Otherwise the model could
+  // introduce a hard constraint the user never asked for (spec §11.3: constraints are user-stated).
+  const requested = new Set<string>();
+  if (params.constraints.minimumSeats !== undefined) requested.add("minimum_seats");
+  if (params.constraints.allowedPowertrains?.length) requested.add("allowed_powertrains");
+  if (params.constraints.transmission) requested.add("transmission");
+  const anyConstraintStated = requested.size > 0;
 
   for (const vehicleId of params.candidateVehicleIds) {
-    for (const c of output.constraint_assessments.filter((a) => a.vehicle_id === vehicleId)) {
+    const assessments = output.constraint_assessments.filter(
+      (a) => a.vehicle_id === vehicleId && requested.has(a.constraint),
+    );
+    for (const c of assessments) {
       if (c.status === "not_satisfied") eliminated.push({ vehicleId, constraint: c.constraint });
       else if (c.status === "insufficient_evidence") blocked.add(vehicleId);
     }

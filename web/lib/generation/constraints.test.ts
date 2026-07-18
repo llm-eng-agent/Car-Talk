@@ -35,4 +35,17 @@ describe("parseConstraints", () => {
   it("returns nothing when no constraint is explicitly stated (never inferred)", () => {
     expect(parseConstraints("אני מחפש רכב משפחתי נחמד")).toEqual({});
   });
+
+  it("does not add a negated powertrain (avoids inverting the constraint)", () => {
+    expect(parseConstraints("לא דיזל")).toEqual({});
+    expect(parseConstraints("not diesel")).toEqual({});
+  });
+
+  it("keeps the positive powertrain while dropping the negated one", () => {
+    expect(parseConstraints("חשמלי אבל לא דיזל")).toEqual({ allowedPowertrains: ["electric"] });
+  });
+
+  it("does not add a negated transmission", () => {
+    expect(parseConstraints("לא ידני")).toEqual({});
+  });
 });
