@@ -13,6 +13,7 @@ import { recommend, type Recommendation } from "./recommend";
 import { modeForRoute, terminalResponse } from "./respond";
 import { type GenerationMode, type GenerationOutput, type GenerationStatus } from "./schema";
 import { emptySession, sanitizeSession, updateSession, type SessionState } from "./session";
+import { emptyTrace, type AnswerTrace } from "../observability/trace";
 
 export interface AnswerResult {
   status: GenerationStatus | "error";
@@ -23,6 +24,9 @@ export interface AnswerResult {
   message?: string; // for terminal (out_of_scope / insufficient) and error/fallback states
   unresolvedMention?: string;
   session: SessionState; // canonical updated session state (spec §16.6)
+  // Request-scoped diagnostics for structured logging (spec §21.3). Always set by answer(); optional
+  // in the type so client-built error results and test fixtures needn't synthesize one.
+  trace?: AnswerTrace;
 }
 
 export interface AnswerDeps {
@@ -46,8 +50,10 @@ export async function answer(
     pkg = await orchestrate(userQuery, retriever, { activeVehicleIds: state.activeVehicleIds });
   } catch {
     // Retrieval unavailable → no LLM call, safe error (spec §22.3). State unchanged.
-    return { status: "error", mode: null, citations: [], message: RETRIEVAL_ERROR_MESSAGE, session: state };
+    return { status: "error", mode: null, citations: [], message: RETRIEVAL_ERROR_MESSAGE, session: state, trace: emptyTrace("error") };
   }
+
+  const chunks = pkg.vehicles.reduce((n, v) => n + v.chunks.length, 0);
 
   // out_of_scope / low-evidence → terminal status, no model call (spec §22.2). State unchanged.
   const terminal = terminalResponse(pkg);
@@ -59,6 +65,7 @@ export async function answer(
       message: terminal.message,
       unresolvedMention: terminal.unresolvedMention,
       session: state,
+      trace: { route: pkg.route, vehicleCount: pkg.vehicles.length, chunkCount: chunks, retries: 0, recommendationRule: null, status: terminal.status },
     };
   }
 
@@ -77,7 +84,14 @@ export async function answer(
 
   if (!result.ok) {
     // One retry already happened inside generateAnswer; return a safe fallback (spec §22.4/§22.5).
-    return { status: "error", mode, citations: [], message: GENERATION_FALLBACK_MESSAGE, session: state };
+    return {
+      status: "error",
+      mode,
+      citations: [],
+      message: GENERATION_FALLBACK_MESSAGE,
+      session: state,
+      trace: { route: pkg.route, vehicleCount: pkg.vehicles.length, chunkCount: chunks, retries: result.attempts - 1, recommendationRule: null, status: "error" },
+    };
   }
   // Expose only the source cards the answer actually cites, so the UI never shows a source that
   // backs no visible claim.
@@ -105,7 +119,22 @@ export async function answer(
         })
       : undefined;
 
-  return { status: result.output.status, mode, output: result.output, citations, recommendation, session: updatedSession };
+  return {
+    status: result.output.status,
+    mode,
+    output: result.output,
+    citations,
+    recommendation,
+    session: updatedSession,
+    trace: {
+      route: pkg.route,
+      vehicleCount: pkg.vehicles.length,
+      chunkCount: chunks,
+      retries: result.attempts - 1,
+      recommendationRule: recommendation?.decisionRule ?? null,
+      status: result.output.status,
+    },
+  };
 }
 
 // Render the session's preferences into the plain view the context builder consumes.

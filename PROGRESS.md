@@ -8,7 +8,7 @@ that step. One PR per task; only the owner merges.
 
 Legend: ✅ done · 🔄 in progress · ⬜ not started · ⛔ blocked
 
-_Last updated: 2026-07-18 (Phase 9: Next.js chat UI)_
+_Last updated: 2026-07-18 (Phase 10: security + reliability)_
 
 ## Status by phase
 
@@ -26,7 +26,7 @@ _Last updated: 2026-07-18 (Phase 9: Next.js chat UI)_
 | Phase 7 — Recommendation engine | ✅ | Deterministic: constraints → lexicographic → Pareto → trade-off; wired into answer() |
 | Phase 8 — Session memory | ✅ | State model + deterministic reducer/validation in answer(); browser persistence is Phase 9 |
 | Phase 9 — User interface (Next.js) | ✅ | Chat UI + /api/chat wrapping answer(); source cards, recommendation/trade-off, preference panel, reset; RTL; §28 Playwright e2e + live smoke |
-| Phase 10 — Security + reliability | ⬜ | |
+| Phase 10 — Security + reliability | ✅ | Pluggable rate limit (Upstash/in-memory) + 429; /api/health; structured trace logs (§21.3); hardening tests; most DoD already met in earlier phases |
 | Phase 11 — Deployment (Vercel + Qdrant Cloud) | ⬜ | |
 
 ## ✅ Spike A — Scraping (PR #1, merged 2026-07-18)
@@ -308,11 +308,42 @@ real browser. "Fork and simplify the Vercel template" (§19.1) here means adopti
 - Built **Vercel-ready** (§20): server routes only, no local-disk persistence, secrets non-`NEXT_PUBLIC_`
   — so Phase 11 deployment is mostly env wiring.
 
+## ✅ Phase 10 — security + reliability
+
+Hardening at the HTTP boundary (spec §Phase 10). **Much of the DoD was already satisfied by earlier
+phases** — timeouts (generation 35s, embedding/Qdrant 10s), one retry + safe fallback, citation
+validation, server-side secrets, UNTRUSTED evidence separation, Qdrant-failure→no-LLM, safe errors
+with no stack. This phase adds the missing pieces:
+
+- **Rate limiting** — `web/lib/security/rateLimit.ts`: one `RateLimiter` interface with two impls
+  behind a factory. **Upstash Redis** (`@upstash/ratelimit`) when `UPSTASH_REDIS_REST_URL/TOKEN` are
+  set (durable, shared across serverless instances — the production path); otherwise an **in-memory
+  sliding window** singleton (per-instance, POC-safe). Client id = HMAC-SHA256 of the forwarded IP
+  with `RATE_LIMIT_SECRET` — the raw IP is never stored/logged (§21.4). Route returns **429** +
+  `Retry-After` before any pipeline work. 20 req / 60s.
+- **Health endpoint** — `web/app/api/health/route.ts`: `GET` → `{ status, checks: { openai, qdrant } }`,
+  booleans of env *presence* only (never values), no external/paid calls, no secrets/stack.
+- **Structured logs** (§21.3) — `answer()` returns a compact `trace` (`web/lib/observability/trace.ts`:
+  route, vehicle/chunk counts, retries, recommendation rule, status); the route logs one JSON line with
+  `latencyMs`, excluding message text / keys / raw chunks (§21.4). `generateAnswer` now reports `attempts`.
+- **Input hardening** — only `message` (non-empty, ≤2000) and an object `session` are read; extra body
+  fields (e.g. a raw Qdrant `filter`) are inert — a user can never inject a retrieval filter.
+- **Tests** — 6 rate-limiter units (limit/window/isolation/factory/hashing) + a security e2e
+  (`/api/health` presence-only; invalid-input 400 ignores a stray `filter`). **119 unit + 6 e2e pass.**
+- **Live-verified** on the running server: health `{openai:true,qdrant:true}`; 20×400 then **429**
+  (zero paid calls — empty messages are counted then validation-rejected); a real turn emitted the
+  structured trace line (`route:single, chunkCount:5, retries:0, latencyMs, status:complete`).
+
+**Rate-limit note:** the earlier Upstash blocker is resolved by the pluggable fallback — the app runs
+now without Upstash keys (in-memory) and upgrades automatically when the keys are added (recommended
+before Vercel, since serverless makes in-memory per-instance).
+
 ## Open flags / dependencies
 
 - ✅ **OpenAI key** available (in git-ignored `.env`).
-- ✅ **Qdrant Cloud key** available; Phase 3b index is live. **Upstash keys** still absent
-  (needed only for Phase 10 rate limiting, not retrieval).
+- ✅ **Qdrant Cloud key** available; Phase 3b index is live. **Upstash keys** absent but **no longer a
+  blocker** — Phase 10 rate limiting falls back to in-memory; add the keys before Vercel for durable,
+  cross-instance limiting.
 - ✅ **`gpt-5.6-terra` verified live** (real model on the account; Responses API works).
 - When building citations/generation: present FAQ Q&A as *publisher info* (`publisher_faq`),
   not as the reviewer's assessment.
@@ -335,4 +366,6 @@ real browser. "Fork and simplify the Vercel template" (§19.1) here means adopti
 | #13 | Phase 7 — deterministic recommendation engine | Merged |
 | #14 | Witty rotating out-of-scope message | Merged |
 | #15 | Phase 8 — session memory (state model + reducer) | Merged |
-| #16 | Phase 9 — Next.js chat UI (route + client + §28 e2e) | Open |
+| #16 | Phase 9 — Next.js chat UI (route + client + §28 e2e) | Merged |
+| #17 | Rotating "thinking" messages | Merged |
+| #18 | Phase 10 — security + reliability (rate limit, health, logs) | Open |
