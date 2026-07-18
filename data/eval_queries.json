@@ -1,0 +1,496 @@
+[
+  {
+    "id": "q01",
+    "query_type": "single_vehicle",
+    "query": "מה הטווח האמיתי של MG S6 בנהיגה יומיומית לעומת הטווח הרשמי?",
+    "expected_vehicle_ids": ["mg_s6"],
+    "relevant_aspects": ["efficiency_range"],
+    "relevant_chunk_ids": {
+      "mg_s6": ["mg_s6_review::b6::c1", "mg_s6_review::b10::c0"]
+    },
+    "expected_answer_points": [
+      "בפועל מתקבל כ-430 ק\"מ, ובנהיגה מתונה עוד מעט יותר",
+      "הטווח הרשמי גבוה יותר (כ-520–530 ק\"מ WLTP)"
+    ],
+    "expected_decision": "informational",
+    "forbidden_claims": ["אמינות ארוכת טווח", "מחיר עדכני בשוק"]
+  },
+  {
+    "id": "q02",
+    "query_type": "single_vehicle",
+    "query": "כמה זמן לוקחת טעינה מהירה DC של MG S6 מ-10 ל-80 אחוז?",
+    "expected_vehicle_ids": ["mg_s6"],
+    "relevant_aspects": ["efficiency_range"],
+    "relevant_chunk_ids": {
+      "mg_s6": ["mg_s6_review::b10::c0"]
+    },
+    "expected_answer_points": [
+      "טעינה מהירה DC מ-10 ל-80 אחוז אורכת כ-38 דקות",
+      "טעינה ביתית תלת-פאזית ב-11 קילוואט אורכת כ-7.5 שעות"
+    ],
+    "expected_decision": "informational",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q03",
+    "query_type": "single_vehicle",
+    "query": "למה מיוחד שיונדאי אלנטרה N מוצעת עם תיבה ידנית?",
+    "expected_vehicle_ids": ["hyundai_elantra_n_manual"],
+    "relevant_aspects": ["usability_ergonomics", "performance"],
+    "relevant_chunk_ids": {
+      "hyundai_elantra_n_manual": ["hyundai_elantra_n_review::b1::c0"]
+    },
+    "expected_answer_points": [
+      "תיבה ידנית היא הצהרה נדירה בשוק שמכוונת לנהג ולחוויית נהיגה טהורה"
+    ],
+    "expected_decision": "informational",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q04",
+    "query_type": "single_vehicle",
+    "query": "מה ההספק והתאוצה ל-100 קמ\"ש של אלנטרה N הידנית?",
+    "expected_vehicle_ids": ["hyundai_elantra_n_manual"],
+    "relevant_aspects": ["performance"],
+    "relevant_chunk_ids": {
+      "hyundai_elantra_n_manual": ["hyundai_elantra_n_review::b1::c0"]
+    },
+    "expected_answer_points": [
+      "מנוע טורבו בנזין 2.0 ליטר עם 276 כ\"ס ו-40 קג\"מ",
+      "תאוצה ל-100 קמ\"ש ב-5.8 שניות ומהירות מרבית 250 קמ\"ש"
+    ],
+    "expected_decision": "informational",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q05",
+    "query_type": "single_vehicle",
+    "query": "למה המחיר של לינק אנד קו 01 ירד כל כך?",
+    "expected_vehicle_ids": ["lynk_co_01"],
+    "relevant_aspects": ["value_for_money"],
+    "relevant_chunk_ids": {
+      "lynk_co_01": ["lynk_co_01_review::b7::c0"]
+    },
+    "expected_answer_points": [
+      "המחיר ירד בכ-60,000 ₪ כדי להתחרות במתחרים סיניים כמו ג'אקו 7 ו-BYD סיל U",
+      "כניסת האח הגדול לינק אנד קו 08 לשוק השפיעה גם היא"
+    ],
+    "expected_decision": "informational",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q06",
+    "query_type": "single_vehicle",
+    "query": "האם לינק אנד קו 01 תומך בטעינה מהירה DC?",
+    "expected_vehicle_ids": ["lynk_co_01"],
+    "relevant_aspects": ["efficiency_range"],
+    "relevant_chunk_ids": {
+      "lynk_co_01": ["lynk_co_01_review::b7::c1", "lynk_co_01_review::b8::c0"]
+    },
+    "expected_answer_points": [
+      "הרכב אינו תומך בטעינה מהירה DC",
+      "טעינה ביתית AC אורכת כ-2.5 שעות עם מטען 11 קילוואט"
+    ],
+    "expected_decision": "informational",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q07",
+    "query_type": "single_vehicle",
+    "query": "מה הטווח בפועל של איון HT מול הטווח המוצהר?",
+    "expected_vehicle_ids": ["aion_ht"],
+    "relevant_aspects": ["efficiency_range"],
+    "relevant_chunk_ids": {
+      "aion_ht": ["aion_ht_review::b7::c0"]
+    },
+    "expected_answer_points": [
+      "הטווח המוצהר 445 ק\"מ, ובכביש בין-עירוני התקבלו כ-370 ק\"מ (כ-85 אחוז)",
+      "בנהיגה עירונית יותר הטווח גדל"
+    ],
+    "expected_decision": "informational",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q08",
+    "query_type": "single_vehicle",
+    "query": "כמה עולה ג'נסיס GV80 ואילו רמות אבזור מוצעות?",
+    "expected_vehicle_ids": ["genesis_gv80"],
+    "relevant_aspects": ["value_for_money"],
+    "relevant_chunk_ids": {
+      "genesis_gv80": ["genesis_gv80_review::b1::c0", "genesis_gv80_review::b1::c1"]
+    },
+    "expected_answer_points": [
+      "שתי רמות אבזור: 'אלגנט' ו'לקשרי'",
+      "המחיר החל ב-575,000 ₪ ל'אלגנט' ו-645,000 ₪ ל'לקשרי'"
+    ],
+    "expected_decision": "informational",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q09",
+    "query_type": "single_vehicle",
+    "query": "מה המחיר של סיטרואן C3 בגרסה הידנית לעומת האוטומטית?",
+    "expected_vehicle_ids": ["citroen_c3"],
+    "relevant_aspects": ["value_for_money"],
+    "relevant_chunk_ids": {
+      "citroen_c3": ["citroen_c3_review::b0::c0"]
+    },
+    "expected_answer_points": [
+      "100,000 ₪ לגרסה הידנית ו-115,000 ₪ לגרסה האוטומטית",
+      "מחירים זולים משמעותית מהמתחרות"
+    ],
+    "expected_decision": "informational",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q10",
+    "query_type": "single_vehicle",
+    "query": "מה הרושם ממערכות הבטיחות של קיה EV9 במבחן הארוך טווח?",
+    "expected_vehicle_ids": ["kia_ev9"],
+    "relevant_aspects": ["safety_equipment", "usability_ergonomics"],
+    "relevant_chunk_ids": {
+      "kia_ev9": ["kia_ev9_long_term_report::b0::c3", "kia_ev9_long_term_report::b0::c1"]
+    },
+    "expected_answer_points": [
+      "מערכות הבטיחות נחוות כמטרידות והיסטריות, יש שמכבים אותן בתחילת הנסיעה",
+      "זו תופעה לא ייחודית לקיה בלבד"
+    ],
+    "expected_decision": "informational",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q11",
+    "query_type": "comparison",
+    "query": "מה עדיף מבחינת טווח וטעינה, MG S6 או איון HT?",
+    "expected_vehicle_ids": ["mg_s6", "aion_ht"],
+    "relevant_aspects": ["efficiency_range"],
+    "relevant_chunk_ids": {
+      "mg_s6": ["mg_s6_review::b10::c0", "mg_s6_review::b6::c1"],
+      "aion_ht": ["aion_ht_review::b7::c0", "aion_ht_review::b2::c1"]
+    },
+    "expected_answer_points": [
+      "MG S6: כ-430 ק\"מ בפועל, טעינה מהירה 144 קילוואט",
+      "איון HT: כ-370 ק\"מ בפועל מתוך 445 מוצהר, טעינה מהירה 163 קילוואט"
+    ],
+    "expected_decision": "trade_off",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q12",
+    "query_type": "comparison",
+    "query": "למשפחה גדולה, מי מציע יותר מרחב, ג'נסיס GV80 או MG S6?",
+    "expected_vehicle_ids": ["genesis_gv80", "mg_s6"],
+    "relevant_aspects": ["space_practicality"],
+    "relevant_chunk_ids": {
+      "genesis_gv80": ["genesis_gv80_review::b4::c0"],
+      "mg_s6": ["mg_s6_review::b5::c0", "mg_s6_review::b6::c0"]
+    },
+    "expected_answer_points": [
+      "GV80 מציע שלוש שורות ומבוגרים יכולים לשבת גם בשורה השלישית",
+      "MG S6 הוא D-SUV חמישה מקומות עם תא מטען 493 ליטר"
+    ],
+    "expected_decision": "trade_off",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q13",
+    "query_type": "comparison",
+    "query": "מבחינת ביצועים ספורטיביים, אאודי RS3 או יונדאי אלנטרה N?",
+    "expected_vehicle_ids": ["audi_rs3", "hyundai_elantra_n_manual"],
+    "relevant_aspects": ["performance"],
+    "relevant_chunk_ids": {
+      "audi_rs3": ["audi_rs3_review::b1::c1"],
+      "hyundai_elantra_n_manual": ["hyundai_elantra_n_review::b1::c0"]
+    },
+    "expected_answer_points": [
+      "RS3: מנוע 5 צילינדרים 400 כ\"ס, 0-100 ב-3.8 שניות, הנעה כפולה",
+      "אלנטרה N: 276 כ\"ס, 0-100 ב-5.8 שניות, תיבה ידנית והנעה קדמית"
+    ],
+    "expected_decision": "trade_off",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q14",
+    "query_type": "comparison",
+    "query": "מי נותן תמורה טובה יותר למחיר ואבזור עשיר, לינק אנד קו 01 או MG S6?",
+    "expected_vehicle_ids": ["lynk_co_01", "mg_s6"],
+    "relevant_aspects": ["value_for_money"],
+    "relevant_chunk_ids": {
+      "lynk_co_01": ["lynk_co_01_review::b8::c0", "lynk_co_01_review::b7::c0"],
+      "mg_s6": ["mg_s6_review::b11::c0", "mg_s6_review::b10::c0"]
+    },
+    "expected_answer_points": [
+      "לינק 01: תמחור אגרסיבי ואבזור עשיר, אך ממשק מסורבל ואין טעינה מהירה DC",
+      "MG S6: תמורה גבוהה למחיר וטווח שימושי, עם נוקשות עירונית מסוימת"
+    ],
+    "expected_decision": "trade_off",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q15",
+    "query_type": "comparison",
+    "query": "שניהם עם 245 כ\"ס - מי מהיר יותר, איון HT או MG S6?",
+    "expected_vehicle_ids": ["aion_ht", "mg_s6"],
+    "relevant_aspects": ["performance"],
+    "relevant_chunk_ids": {
+      "aion_ht": ["aion_ht_review::b6::c0"],
+      "mg_s6": ["mg_s6_review::b1::c1", "mg_s6_review::b10::c1"]
+    },
+    "expected_answer_points": [
+      "איון HT: 245 כ\"ס, 0-100 ב-7.1 שניות",
+      "MG S6 (מנוע יחיד): 245 כ\"ס, 0-100 ב-7.3 שניות"
+    ],
+    "expected_decision": "trade_off",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q16",
+    "query_type": "comparison",
+    "query": "איזו סביבת נהג ואיכות פנים טובה יותר, סיטרואן C3 או לינק אנד קו 01?",
+    "expected_vehicle_ids": ["citroen_c3", "lynk_co_01"],
+    "relevant_aspects": ["interior_quality", "usability_ergonomics"],
+    "relevant_chunk_ids": {
+      "citroen_c3": ["citroen_c3_review::b3::c0"],
+      "lynk_co_01": ["lynk_co_01_review::b4::c0", "lynk_co_01_review::b7::c3"]
+    },
+    "expected_answer_points": [
+      "לינק 01: איכות חומרים טובה עם השפעה סקנדינבית-אירופית",
+      "C3: סביבת נהג ונוסעים בקטגוריית סופרמיני זולה"
+    ],
+    "expected_decision": "trade_off",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q17",
+    "query_type": "comparison",
+    "query": "מבחינת התנהגות כביש, ג'נסיס GV80 או אאודי RS3?",
+    "expected_vehicle_ids": ["genesis_gv80", "audi_rs3"],
+    "relevant_aspects": ["handling"],
+    "relevant_chunk_ids": {
+      "genesis_gv80": ["genesis_gv80_review::b6::c0"],
+      "audi_rs3": ["audi_rs3_review::b6::c0"]
+    },
+    "expected_answer_points": [
+      "RS3: דיפרנציאל אחורי אקטיבי וטורק וקטורי לנהיגה חדה",
+      "GV80: SUV יוקרה עם מצב ספורט ואופי נינוח יותר"
+    ],
+    "expected_decision": "trade_off",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q18",
+    "query_type": "comparison",
+    "query": "מבחינת מערכות בטיחות, קיה EV9 או איון HT?",
+    "expected_vehicle_ids": ["kia_ev9", "aion_ht"],
+    "relevant_aspects": ["safety_equipment"],
+    "relevant_chunk_ids": {
+      "kia_ev9": ["kia_ev9_long_term_report::b0::c3"],
+      "aion_ht": ["aion_ht_review::b1::c1"]
+    },
+    "expected_answer_points": [
+      "EV9: מצויד במערכות בטיחות רבות, אך הן נחוות כמטרידות",
+      "איון HT: מיובא בכמות מוגבלת וחסר חלק ממערכות הבטיחות"
+    ],
+    "expected_decision": "trade_off",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q19",
+    "query_type": "recommendation",
+    "query": "אני מחפש SUV חשמלי משפחתי עם טווח טוב וטעינה מהירה. מה מומלץ?",
+    "expected_vehicle_ids": ["mg_s6", "aion_ht"],
+    "relevant_aspects": ["efficiency_range", "space_practicality"],
+    "relevant_chunk_ids": {
+      "mg_s6": ["mg_s6_review::b10::c0", "mg_s6_review::b6::c1"],
+      "aion_ht": ["aion_ht_review::b7::c0", "aion_ht_review::b2::c1"]
+    },
+    "expected_answer_points": [
+      "MG S6: כ-430 ק\"מ בפועל, טעינה מהירה 144 קילוואט, מרחב נדיב",
+      "איון HT: כ-370 ק\"מ בפועל, טעינה מהירה 163 קילוואט"
+    ],
+    "expected_decision": "recommend",
+    "forbidden_claims": ["אמינות ארוכת טווח", "מחיר עדכני בשוק"]
+  },
+  {
+    "id": "q20",
+    "query_type": "recommendation",
+    "query": "אני חובב נהיגה שרוצה מכונית ספורט אמיתית עם תיבה ידנית. מה מתאים?",
+    "expected_vehicle_ids": ["hyundai_elantra_n_manual"],
+    "relevant_aspects": ["performance", "handling"],
+    "relevant_chunk_ids": {
+      "hyundai_elantra_n_manual": ["hyundai_elantra_n_review::b1::c0", "hyundai_elantra_n_review::b1::c2"]
+    },
+    "expected_answer_points": [
+      "אלנטרה N הידנית: 276 כ\"ס, שלדה מצוינת וחוויית נהיגה טהורה",
+      "אחת ההזדמנויות האחרונות לתיבה ידנית ספורטיבית במחיר ריאלי"
+    ],
+    "expected_decision": "recommend",
+    "forbidden_claims": ["אמינות ארוכת טווח"]
+  },
+  {
+    "id": "q21",
+    "query_type": "recommendation",
+    "query": "אני צריך SUV יוקרתי עם שלוש שורות ישיבה למשפחה גדולה. מה מומלץ?",
+    "expected_vehicle_ids": ["genesis_gv80"],
+    "relevant_aspects": ["space_practicality", "interior_quality"],
+    "relevant_chunk_ids": {
+      "genesis_gv80": ["genesis_gv80_review::b4::c0", "genesis_gv80_review::b1::c0"]
+    },
+    "expected_answer_points": [
+      "GV80 מציע שלוש שורות ישיבה עם מרחב נדיב גם בשורה השלישית",
+      "רמת אבזור וגימור גבוהה, בעיקר בגרסת 'לקשרי'"
+    ],
+    "expected_decision": "recommend",
+    "forbidden_claims": ["מחיר עדכני בשוק"]
+  },
+  {
+    "id": "q22",
+    "query_type": "recommendation",
+    "query": "אני רוצה רכב עירוני קטן וזול לנהג/ת חדש/ה. מה כדאי?",
+    "expected_vehicle_ids": ["citroen_c3"],
+    "relevant_aspects": ["value_for_money"],
+    "relevant_chunk_ids": {
+      "citroen_c3": ["citroen_c3_review::b0::c0", "citroen_c3_review::b1::c1"]
+    },
+    "expected_answer_points": [
+      "סיטרואן C3 היא סופרמיני במחיר פתיחה של 100,000 ₪",
+      "מחיר זול משמעותית מהמתחרות"
+    ],
+    "expected_decision": "recommend",
+    "forbidden_claims": ["אמינות ארוכת טווח"]
+  },
+  {
+    "id": "q23",
+    "query_type": "recommendation",
+    "query": "אני מחפש רכב פנאי משפחתי עם תמורה גבוהה למחיר ואבזור עשיר. מה מומלץ?",
+    "expected_vehicle_ids": ["mg_s6", "lynk_co_01"],
+    "relevant_aspects": ["value_for_money"],
+    "relevant_chunk_ids": {
+      "mg_s6": ["mg_s6_review::b11::c0"],
+      "lynk_co_01": ["lynk_co_01_review::b8::c0"]
+    },
+    "expected_answer_points": [
+      "MG S6: תמורה גבוהה למחיר, אבזור עשיר וטווח שימושי",
+      "לינק 01: תמחור אגרסיבי ואבזור עשיר, אך ללא טעינה מהירה DC"
+    ],
+    "expected_decision": "recommend",
+    "forbidden_claims": ["אמינות ארוכת טווח", "מחיר עדכני בשוק"]
+  },
+  {
+    "id": "q24",
+    "query_type": "recommendation",
+    "query": "אני רוצה הוט-האצ' עם ביצועים גבוהים. מה מומלץ?",
+    "expected_vehicle_ids": ["audi_rs3", "hyundai_elantra_n_manual"],
+    "relevant_aspects": ["performance"],
+    "relevant_chunk_ids": {
+      "audi_rs3": ["audi_rs3_review::b1::c1"],
+      "hyundai_elantra_n_manual": ["hyundai_elantra_n_review::b1::c0"]
+    },
+    "expected_answer_points": [
+      "אאודי RS3: 400 כ\"ס, 0-100 ב-3.8 שניות, הנעה כפולה",
+      "אלנטרה N: 276 כ\"ס ותיבה ידנית במחיר נמוך יותר"
+    ],
+    "expected_decision": "recommend",
+    "forbidden_claims": ["מחיר עדכני בשוק"]
+  },
+  {
+    "id": "q25",
+    "query_type": "unanswerable",
+    "query": "מה רמת האמינות ארוכת הטווח והתקלות הנפוצות של MG S6?",
+    "expected_vehicle_ids": ["mg_s6"],
+    "relevant_aspects": [],
+    "relevant_chunk_ids": {},
+    "expected_answer_points": [
+      "הכתבה אינה כוללת נתוני אמינות ארוכת טווח או שיעורי תקלות"
+    ],
+    "expected_decision": "abstain",
+    "forbidden_claims": ["אמינות ארוכת טווח", "שיעור תקלות"]
+  },
+  {
+    "id": "q26",
+    "query_type": "unanswerable",
+    "query": "מה מחיר היד השנייה העדכני של אאודי RS3 בשוק היום?",
+    "expected_vehicle_ids": ["audi_rs3"],
+    "relevant_aspects": [],
+    "relevant_chunk_ids": {},
+    "expected_answer_points": [
+      "הכתבה אינה כוללת מחירי יד שנייה או מחירי שוק עדכניים"
+    ],
+    "expected_decision": "abstain",
+    "forbidden_claims": ["מחיר יד שנייה", "מחיר עדכני בשוק"]
+  },
+  {
+    "id": "q27",
+    "query_type": "unanswerable",
+    "query": "האם כדאי לקנות טויוטה קורולה 2026?",
+    "expected_vehicle_ids": [],
+    "relevant_aspects": [],
+    "relevant_chunk_ids": {},
+    "expected_answer_points": [
+      "טויוטה קורולה אינה נמצאת במאגר הכתבות של המערכת"
+    ],
+    "expected_decision": "abstain",
+    "forbidden_claims": ["רכב שאינו במאגר"]
+  },
+  {
+    "id": "q28",
+    "query_type": "follow_up",
+    "query": "ומה הטווח שלו בפועל?",
+    "context": [
+      {"role": "user", "text": "ספר לי על MG S6"},
+      {"role": "assistant", "text": "MG S6 הוא D-SUV חשמלי של MG."}
+    ],
+    "expected_vehicle_ids": ["mg_s6"],
+    "relevant_aspects": ["efficiency_range"],
+    "relevant_chunk_ids": {
+      "mg_s6": ["mg_s6_review::b6::c1", "mg_s6_review::b10::c0"]
+    },
+    "expected_answer_points": [
+      "ה'שלו' מתייחס ל-MG S6 מהתור הקודם",
+      "הטווח בפועל כ-430 ק\"מ מול טווח רשמי גבוה יותר"
+    ],
+    "expected_decision": "informational",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q29",
+    "query_type": "follow_up",
+    "query": "וכמה הוא עולה?",
+    "context": [
+      {"role": "user", "text": "מעניין אותי ג'נסיס GV80"},
+      {"role": "assistant", "text": "GV80 הוא SUV יוקרה של ג'נסיס."}
+    ],
+    "expected_vehicle_ids": ["genesis_gv80"],
+    "relevant_aspects": ["value_for_money"],
+    "relevant_chunk_ids": {
+      "genesis_gv80": ["genesis_gv80_review::b1::c1", "genesis_gv80_review::b1::c0"]
+    },
+    "expected_answer_points": [
+      "ה'הוא' מתייחס ל-GV80 מהתור הקודם",
+      "המחיר החל ב-575,000 ₪ ('אלגנט') ועד 645,000 ₪ ('לקשרי')"
+    ],
+    "expected_decision": "informational",
+    "forbidden_claims": []
+  },
+  {
+    "id": "q30",
+    "query_type": "follow_up",
+    "query": "ואיזה מהם נטען מהר יותר ב-DC?",
+    "context": [
+      {"role": "user", "text": "השווה בין MG S6 לאיון HT"},
+      {"role": "assistant", "text": "שניהם D-SUV חשמליים."}
+    ],
+    "expected_vehicle_ids": ["mg_s6", "aion_ht"],
+    "relevant_aspects": ["efficiency_range"],
+    "relevant_chunk_ids": {
+      "mg_s6": ["mg_s6_review::b10::c0"],
+      "aion_ht": ["aion_ht_review::b2::c1"]
+    },
+    "expected_answer_points": [
+      "ההשוואה ממשיכה מהתור הקודם בין MG S6 לאיון HT",
+      "איון HT תומך ב-163 קילוואט לעומת 144 קילוואט ב-MG S6"
+    ],
+    "expected_decision": "trade_off",
+    "forbidden_claims": []
+  }
+]

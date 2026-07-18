@@ -8,7 +8,7 @@ that step. One PR per task; only the owner merges.
 
 Legend: ✅ done · 🔄 in progress · ⬜ not started · ⛔ blocked
 
-_Last updated: 2026-07-18 (Phase 3b: Qdrant indexing)_
+_Last updated: 2026-07-18 (Phase 4: golden eval dataset)_
 
 ## Status by phase
 
@@ -20,7 +20,7 @@ _Last updated: 2026-07-18 (Phase 3b: Qdrant indexing)_
 | Phase 2 — Full ingestion (8 articles) | ✅ | All 8 extracted + validated; idempotent |
 | Phase 3a — Chunking + embeddings | ✅ | 162 chunks embedded (1536-d); cache works |
 | Phase 3b — Qdrant indexing | ✅ | 162 points in `car_review_chunks_v1` (dense + BM25) |
-| Phase 4 — Evaluation dataset (30 Hebrew queries) | ⬜ | |
+| Phase 4 — Evaluation dataset (30 Hebrew queries) | 🔄 | Golden dataset done; eval runner + metrics next |
 | Phase 5 — Retrieval orchestrator | ⬜ | |
 | Phase 6 — Context + generation | ⬜ | |
 | Phase 7 — Recommendation engine | ⬜ | |
@@ -101,6 +101,25 @@ Hybrid (dense + BM25) index of the Phase 3a chunks in one shared collection:
   Dense query vectors are embedded client-side (OpenAI); only BM25 uses Qdrant inference.
 - 9 offline tests (`_FakeQdrantClient`); CI stays live-Qdrant-free.
 
+## 🔄 Phase 4 — Evaluation dataset (part A: golden set)
+
+Manually-labeled Hebrew golden set of 30 queries (spec §18.1/§18.2), the prerequisite for
+measuring retrieval quality. **This step is the dataset only**; the eval runner + metrics
+(dense/BM25/hybrid ablation, Recall@5/Precision@5) is the next task (Phase 4b / Spike B).
+
+- `data/eval_queries.json`: 30 queries — 10 single-vehicle, 8 comparison, 6 recommendation,
+  3 unanswerable, 3 follow-up (§18.1). Each carries `expected_vehicle_ids`,
+  `relevant_aspects` (from the §11.5 vocabulary), `relevant_chunk_ids` (real
+  `{document_id}::b..::c..` ids), `expected_answer_points`, `expected_decision`, and
+  `forbidden_claims`. Grounded in the live corpus — gold targets prefer the 13 Q&A / 2
+  pros-cons chunks; unanswerable queries abstain with empty gold; follow-ups carry `context`.
+- Schema (`Aspect`/`QueryType`/`ExpectedDecision` enums, `EvalQuery`, `load_eval_dataset`)
+  added to `models.py`; ID scheme: `expected_vehicle_ids` + `relevant_chunk_ids` keys are
+  `vehicle_id`, chunk-id values are real `chunk_id`s (validator maps via `sources.json`).
+- 9 offline integrity tests (`test_eval_dataset.py`): distribution counts, id resolution,
+  chunk-id shape, abstain/context invariants — plus a local-only check (skipped in CI) that
+  every gold `chunk_id` exists on disk. All ~55 gold ids verified against `.tmp/chunks`.
+
 ## Open flags / dependencies
 
 - ✅ **OpenAI key** available (in git-ignored `.env`).
@@ -119,4 +138,5 @@ Hybrid (dense + BM25) index of the Phase 3a chunks in one shared collection:
 | #2 | PROGRESS.md progress tracker | Merged |
 | #3 | Phase 2 — full ingestion of 8 articles | Merged |
 | #4 | Phase 3a — chunking + embeddings (+ module consolidation 19→8) | Merged |
-| #6 | Phase 3b — Qdrant hybrid indexing | Open |
+| #6 | Phase 3b — Qdrant hybrid indexing | Merged |
+| #7 | Phase 4 — Hebrew golden eval dataset | Open |
