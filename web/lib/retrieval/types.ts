@@ -30,8 +30,9 @@ export interface RetrievedChunk {
   content: string;
 }
 
-// The retrieval route is decided by the number of resolved vehicles (spec §11.4).
-export type Route = "single" | "comparison" | "discovery";
+// The retrieval route is decided by the number of resolved vehicles (spec §11.4). `out_of_scope`
+// is the non-retrieval outcome for a named-but-unknown vehicle (spec line 185 / eval q27).
+export type Route = "single" | "comparison" | "discovery" | "out_of_scope";
 
 // Evidence for one vehicle after balanced retrieval.
 export interface VehicleEvidence {
@@ -46,4 +47,7 @@ export interface EvidencePackage {
   vehicles: VehicleEvidence[];
   aspects: Aspect[];
   sufficient: boolean;
+  // On the `out_of_scope` route, the out-of-corpus make that was named (so the abstention
+  // message can reference it, e.g. "טויוטה אינה במאגר").
+  unresolvedMention?: string;
 }

@@ -2,6 +2,7 @@
 // number of resolved vehicles decides the route; every route yields a balanced `EvidencePackage`
 // and a deterministic low-evidence gate keeps under-supported queries out of generation.
 import { resolveAspects } from "./aspects";
+import { detectOutOfCorpusMake } from "./knownMakes";
 import { type SearchOptions } from "./retriever";
 import { type EvidencePackage, type RetrievedChunk, type Route, type VehicleEvidence } from "./types";
 import { resolveVehicles } from "./vehicleResolver";
@@ -32,9 +33,18 @@ export async function orchestrate(
   const aspects = resolveAspects(queryText);
   let vehicleIds = resolveVehicles(queryText);
 
-  // Follow-up: no vehicle named in the query → fall back to the active session vehicles.
-  if (vehicleIds.length === 0 && options.activeVehicleIds && options.activeVehicleIds.length > 0) {
-    vehicleIds = options.activeVehicleIds;
+  if (vehicleIds.length === 0) {
+    // A named-but-unknown vehicle/brand must abstain, not fall through to discovery with evidence
+    // for unrelated cars (spec line 185 / eval q27). Checked before the follow-up fallback so an
+    // explicit out-of-corpus mention overrides prior session context.
+    const make = detectOutOfCorpusMake(queryText);
+    if (make) {
+      return { route: "out_of_scope", vehicles: [], aspects, sufficient: false, unresolvedMention: make };
+    }
+    // Follow-up: no vehicle named in the query → fall back to the active session vehicles.
+    if (options.activeVehicleIds && options.activeVehicleIds.length > 0) {
+      vehicleIds = options.activeVehicleIds;
+    }
   }
 
   if (vehicleIds.length === 1) {

@@ -190,7 +190,13 @@ Phase-4b single-pool top-5 with **per-vehicle balanced retrieval**, the fix for 
   by group → balanced top-3 each). **Follow-up** falls back to `activeVehicleIds` (Phase 8
   supplies these). **Low-evidence gate**: single/discovery with 0 chunks, or a comparison with
   <2 evidenced sides → `sufficient:false` → caller abstains, generation never runs.
-- **Tests**: 11 offline (fake client/embedder) + a live smoke check (skipped without secrets)
+- **Out-of-corpus gate** (review fix): a query naming a make outside the 8-article corpus
+  (e.g. טויוטה קורולה) resolves to no vehicle but must **not** fall through to discovery with
+  evidence for unrelated cars (spec line 185 / eval q27). `knownMakes.ts` + curated
+  `data/known_makes.json` detect a named-but-unknown brand → `route: "out_of_scope"`,
+  `sufficient:false`, `unresolvedMention` set; the retriever is never queried. Genuine
+  no-vehicle recommendations still route to discovery. List is curated, not exhaustive.
+- **Tests**: 13 offline (fake client/embedder) + a live smoke check (skipped without secrets)
   that verified all three routes against the real collection — single→`mg_s6`, comparison→
   balanced `audi_rs3`+`kia_ev9`, discovery→candidates. `build`/`typecheck` clean.
 - Output is an `EvidencePackage` — the input contract for the Phase 6 context builder.

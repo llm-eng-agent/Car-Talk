@@ -116,4 +116,27 @@ describe("orchestrate", () => {
     expect(pkg.vehicles).toEqual([]);
     expect(pkg.sufficient).toBe(false);
   });
+
+  it("abstains for a named out-of-corpus vehicle instead of discovering unrelated cars", async () => {
+    const retriever = scripted(() => [chunk("mg_s6")]);
+
+    const pkg = await orchestrate("האם כדאי לקנות טויוטה קורולה 2026?", retriever);
+
+    expect(pkg.route).toBe("out_of_scope");
+    expect(pkg.sufficient).toBe(false);
+    expect(pkg.vehicles).toEqual([]);
+    expect(pkg.unresolvedMention).toBe("Toyota");
+    expect(retriever.calls).toHaveLength(0); // never reaches Qdrant
+  });
+
+  it("lets an explicit out-of-corpus mention override active session vehicles", async () => {
+    const retriever = scripted(() => [chunk("mg_s6")]);
+
+    const pkg = await orchestrate("ומה עם טויוטה קורולה?", retriever, {
+      activeVehicleIds: ["mg_s6"],
+    });
+
+    expect(pkg.route).toBe("out_of_scope");
+    expect(retriever.calls).toHaveLength(0);
+  });
 });

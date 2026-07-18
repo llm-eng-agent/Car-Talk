@@ -46,4 +46,13 @@ describe.skipIf(!hasEnv)("live retrieval orchestrator", () => {
     expect(pkg.vehicles.length).toBeGreaterThan(0);
     expect(pkg.vehicles.length).toBeLessThanOrEqual(3);
   }, 30_000);
+
+  it("abstains for an out-of-corpus vehicle without querying Qdrant", async () => {
+    const pkg = await orchestrate("האם כדאי לקנות טויוטה קורולה 2026?", retriever());
+
+    expect(pkg.route).toBe("out_of_scope");
+    expect(pkg.sufficient).toBe(false);
+    expect(pkg.vehicles).toEqual([]);
+    expect(pkg.unresolvedMention).toBe("Toyota");
+  }, 30_000);
 });
