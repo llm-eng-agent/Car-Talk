@@ -24,7 +24,7 @@ _Last updated: 2026-07-18 (Phase 7: deterministic recommendation engine)_
 | Phase 5 — Retrieval orchestrator | ✅ | 5a: resolver (100%); 5b: live routes + balanced evidence + low-evidence gate |
 | Phase 6 — Context + generation | ✅ | 6a: context/citations/schema/validation; 6b: live gpt-5.6-terra call + answer() pipeline (verified live) |
 | Phase 7 — Recommendation engine | ✅ | Deterministic: constraints → lexicographic → Pareto → trade-off; wired into answer() |
-| Phase 8 — Session memory | ⬜ | |
+| Phase 8 — Session memory | ✅ | State model + deterministic reducer/validation in answer(); browser persistence is Phase 9 |
 | Phase 9 — User interface (Next.js) | ⬜ | |
 | Phase 10 — Security + reliability | ⬜ | |
 | Phase 11 — Deployment (Vercel + Qdrant Cloud) | ⬜ | |
@@ -217,8 +217,8 @@ no LLM yet. Mirrors the 5a/5b split; the live call (6b) is gated on the model-id
   terminal status **without** calling the model — spec §22.2).
 - **RetrievedChunk** extended with `articleTitle` + `sourceUrl` (already in the Qdrant payload).
 - **19 offline tests** across the five modules; `test`/`typecheck`/`build` clean.
-- Final abstention/out_of_scope **wording** is a provisional placeholder — deferred per owner
-  until after the context stage.
+- Final out_of_scope **wording** finalized in PR #14: a rotating set of witty openers that name
+  the make + state the corpus limit (§24.8); insufficient_evidence stays neutral.
 
 ## ✅ Phase 6b — live structured generation + answer pipeline
 
@@ -258,6 +258,26 @@ The application-side final decision (spec §17) — the LLM assesses evidence, t
 - **Tests:** 21 offline (parser + the full §18.7 recommendation matrix + context + pipeline) + a
   live constrained-recommendation smoke. **90 total pass**; `typecheck`/`build` clean.
 
+## ✅ Phase 8 — session memory (state model + reducer)
+
+Short-term session memory (spec §16), server-side half. Browser `sessionStorage` + sending state
+with each request is Phase 9.
+
+- **`session.ts`** — `SessionState` (active/comparison vehicles, preferences = priorities +
+  constraints + usage patterns, two recent turns, per-aspect inferred counters). `emptySession()`
+  (new session starts empty), `sanitizeSession()` (server-validates client-sent state: drops
+  non-approved vehicles / out-of-enum aspects & usage / caps recent turns — §16.6), `updateSession()`
+  (folds one turn: explicit preferences stick immediately and override conflicts; **inferred stick
+  only after two turns** §249; constraints explicit-only override; usage-pattern union; last 2 turns).
+- **`answer.ts`** — accepts a prior `SessionState`, sanitizes it, uses `activeVehicleIds` for the
+  follow-up path, renders preferences into the context, and returns the canonical **updated
+  session**. Preference extraction rides on the existing generation call — no extra LLM (§16.5).
+- **Tests:** the §18.8 memory matrix (empty start, follow-up carries active vehicles, explicit
+  retention, explicit override, one-time question ≠ preference, two-turn inferred rule, usage-enum,
+  recent-turns cap, sanitize) + pipeline session tests. **~110 pass**; `typecheck`/`build` clean.
+- Also hardened the live recommendation smoke to accept the spec's safe-fallback (a complex
+  3-vehicle recommendation can occasionally exceed the 1200-token cap → fallback, which is correct).
+
 ## Open flags / dependencies
 
 - ✅ **OpenAI key** available (in git-ignored `.env`).
@@ -282,4 +302,6 @@ The application-side final decision (spec §17) — the LLM assesses evidence, t
 | #10 | Phase 5b — live retrieval orchestrator (routes + balanced evidence) | Merged |
 | #11 | Phase 6a — context builder + citation map + generation schema | Merged |
 | #12 | Phase 6b — live structured generation + answer pipeline | Merged |
-| #13 | Phase 7 — deterministic recommendation engine | Open |
+| #13 | Phase 7 — deterministic recommendation engine | Merged |
+| #14 | Witty rotating out-of-scope message | Merged |
+| #15 | Phase 8 — session memory (state model + reducer) | Open |
